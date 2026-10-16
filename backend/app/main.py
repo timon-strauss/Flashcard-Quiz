@@ -1,8 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import engine, Base
-from .routers import decks, cards
+from .database import DatabaseAPI
 
 app = FastAPI(title="Flashcards API")
 
@@ -21,13 +20,9 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-def create_tables():
-    os.makedirs("data", exist_ok=True)
-    Base.metadata.create_all(bind=engine)
+def startup():
+    DatabaseAPI.start_db()
 
-
-app.include_router(decks.router)
-app.include_router(cards.router)
 
 
 @app.get("/health")
