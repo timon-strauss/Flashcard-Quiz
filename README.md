@@ -60,6 +60,41 @@ The SQLite database is stored in `./data/flashcards.db` on the host and persists
 docker-compose down
 ```
 
+## Testing
+
+Unit tests cover the database layer (Topics, Decks, Cards CRUD). They run against an in-memory SQLite database — no files are created on disk.
+
+```bash
+cd backend
+source .venv/bin/activate   # activate venv if not already active
+pytest tests/
+```
+
+Run with verbose output to see each test name:
+
+```bash
+pytest tests/ -v
+```
+
+Run a single module:
+
+```bash
+pytest tests/test_topics.py
+pytest tests/test_decks.py
+pytest tests/test_cards.py
+```
+
+### Test layout
+
+```
+backend/
+└── tests/
+    ├── conftest.py       # shared api fixture (in-memory DB)
+    ├── test_topics.py    # Topic CRUD + cascade delete
+    ├── test_decks.py     # Deck CRUD + topic association + cascade delete
+    └── test_cards.py     # Card CRUD + filtering by deck/topic
+```
+
 ## API overview
 
 | Method | Path | Description |
