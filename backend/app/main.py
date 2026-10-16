@@ -2,6 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import DatabaseAPI
+from .routers import topics, decks, cards
 
 app = FastAPI(title="Flashcards API")
 
@@ -22,6 +23,11 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     DatabaseAPI.start_db()
+
+
+app.include_router(topics.router)
+app.include_router(decks.router)
+app.include_router(cards.router)
 
 
 
