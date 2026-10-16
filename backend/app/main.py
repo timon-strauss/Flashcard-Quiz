@@ -1,8 +1,12 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import DatabaseAPI
-from .routers import topics, decks, cards
+from fastapi.staticfiles import StaticFiles
+from .database import db as DatabaseAPI
+from .routers import topics, decks, cards, uploads
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "Upload")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title="Flashcards API")
 
@@ -25,9 +29,12 @@ def startup():
     DatabaseAPI.start_db()
 
 
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
 app.include_router(topics.router)
 app.include_router(decks.router)
 app.include_router(cards.router)
+app.include_router(uploads.router)
 
 
 
