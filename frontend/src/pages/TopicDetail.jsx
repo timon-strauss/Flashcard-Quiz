@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { fetchTopic, fetchTopicDecks, fetchDecks, fetchDeckCards } from '../api/client'
+import { fetchTopic, fetchTopicDecks, fetchDecks, fetchDeckCards, exportTopic } from '../api/client'
 import ProgressRing from '../components/ProgressRing'
 import CreateDeckModal from '../components/CreateDeckModal'
 import EditTopicModal from '../components/EditTopicModal'
 import EditDeckModal from '../components/EditDeckModal'
+import ImportModal from '../components/ImportModal'
 import styles from './TopicDetail.module.css'
 
 function numericSort(a, b) {
@@ -39,6 +40,7 @@ export default function TopicDetail() {
   const [loading, setLoading] = useState(true)
   const [showDeckModal, setShowDeckModal] = useState(false)
   const [showEditTopic, setShowEditTopic] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [editDeck, setEditDeck] = useState(null)
   const [editDeckCards, setEditDeckCards] = useState([])
 
@@ -63,6 +65,16 @@ export default function TopicDetail() {
   function handleDeckCreated() {
     setShowDeckModal(false)
     load()
+  }
+
+  async function handleExportTopic() {
+    const blob = await exportTopic(topicId)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `topic_${topic.name.replace(/[^a-z0-9]/gi, '_')}.json`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function handleTopicUpdated(updated) {
@@ -154,9 +166,17 @@ export default function TopicDetail() {
 
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>Decks</h2>
-        <button className={styles.createBtn} onClick={() => setShowDeckModal(true)}>
-          + Deck
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className={styles.createBtn} onClick={handleExportTopic}>
+            ↓ Exportieren
+          </button>
+          <button className={styles.createBtn} onClick={() => setShowImportModal(true)}>
+            ↑ Importieren
+          </button>
+          <button className={styles.createBtn} onClick={() => setShowDeckModal(true)}>
+            + Deck
+          </button>
+        </div>
       </div>
 
       {decks.length === 0 ? (
@@ -197,6 +217,13 @@ export default function TopicDetail() {
         </div>
       )}
 
+      {showImportModal && (
+        <ImportModal
+          targetTopicId={Number(topicId)}
+          onClose={() => setShowImportModal(false)}
+          onImported={() => { setShowImportModal(false); load() }}
+        />
+      )}
       {showDeckModal && (
         <CreateDeckModal
           topicId={Number(topicId)}

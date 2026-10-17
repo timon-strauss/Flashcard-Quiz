@@ -6,6 +6,7 @@ import CreateTopicModal from '../components/CreateTopicModal'
 import CreateDeckModal from '../components/CreateDeckModal'
 import EditTopicModal from '../components/EditTopicModal'
 import EditDeckModal from '../components/EditDeckModal'
+import ImportModal from '../components/ImportModal'
 import styles from './Dashboard.module.css'
 
 function getTopicStatus(topic) {
@@ -54,6 +55,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [showTopicModal, setShowTopicModal] = useState(false)
   const [showDeckModal, setShowDeckModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [editTopic, setEditTopic] = useState(null)
   const [editDeck, setEditDeck] = useState(null)
   const [editDeckCards, setEditDeckCards] = useState([])
@@ -138,6 +140,9 @@ export default function Dashboard() {
       <header className={styles.header}>
         <h1 className={styles.heading}>Meine Themen</h1>
         <div className={styles.headerActions}>
+          <button className={styles.createBtn} onClick={() => setShowImportModal(true)}>
+            ↑ Importieren
+          </button>
           <button className={styles.createBtn} onClick={() => setShowDeckModal(true)}>
             + Deck
           </button>
@@ -261,6 +266,12 @@ export default function Dashboard() {
         </>
       )}
 
+      {showImportModal && (
+        <ImportModal
+          onClose={() => setShowImportModal(false)}
+          onImported={() => { setShowImportModal(false); load() }}
+        />
+      )}
       {showTopicModal && (
         <CreateTopicModal
           onClose={() => setShowTopicModal(false)}

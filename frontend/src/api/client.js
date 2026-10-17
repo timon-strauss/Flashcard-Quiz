@@ -43,3 +43,29 @@ export const deleteCard = (id) => request(`/cards/${id}`, { method: 'DELETE' })
 export const markCardSeen = (id) => request(`/cards/${id}/seen`, { method: 'PATCH' })
 export const setCardMemorized = (id, memorized) =>
   request(`/cards/${id}/memorized`, { method: 'PATCH', body: JSON.stringify({ memorized }) })
+
+// Transfer
+export const exportDeck = (id) =>
+  fetch(`${BASE}/export/deck/${id}`).then((res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+    return res.blob()
+  })
+
+export const exportTopic = (id) =>
+  fetch(`${BASE}/export/topic/${id}`).then((res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+    return res.blob()
+  })
+
+export const importTransfer = (file, targetTopicId) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (targetTopicId != null) formData.append('target_topic_id', String(targetTopicId))
+  return fetch(`${BASE}/import`, { method: 'POST', body: formData }).then(async (res) => {
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || `HTTP ${res.status}`)
+    }
+    return res.json()
+  })
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { fetchDeck, fetchDeckCards, markCardSeen, setCardMemorized } from '../api/client'
+import { fetchDeck, fetchDeckCards, markCardSeen, setCardMemorized, exportDeck } from '../api/client'
 import ProgressRing from '../components/ProgressRing'
 import CardManagerModal from '../components/CardManagerModal'
 import EditDeckModal from '../components/EditDeckModal'
@@ -97,6 +97,16 @@ export default function StudyView() {
     } else {
       navigate('/')
     }
+  }
+
+  async function handleExportDeck() {
+    const blob = await exportDeck(deckId)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `deck_${deck.name.replace(/[^a-z0-9]/gi, '_')}.json`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function handleCardsChanged(newCards) {
@@ -229,6 +239,9 @@ export default function StudyView() {
           <ProgressRing progress={progress} size={52} stroke={4} color="#6366f1" />
           <button className={styles.createCardBtn} onClick={() => setShowCardManager(true)}>
             + Karte
+          </button>
+          <button className={styles.editDeckBtn} onClick={handleExportDeck} title="Exportieren">
+            ↓
           </button>
           <button className={styles.editDeckBtn} onClick={() => setShowEditDeck(true)}>
             ✎
