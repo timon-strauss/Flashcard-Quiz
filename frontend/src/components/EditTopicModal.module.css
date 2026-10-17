@@ -30,7 +30,7 @@
 
 .confirmText {
   font-size: 0.95rem;
-  color: #a0a0b8;
+  color: var(--text-muted);
   line-height: 1.6;
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.25);

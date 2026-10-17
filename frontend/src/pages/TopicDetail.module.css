@@ -1,13 +1,13 @@
 .page {
   max-width: 860px;
   margin: 0 auto;
-  padding: 32px 20px 80px;
+  padding: 40px 20px 80px;
 }
 
 .loading {
   text-align: center;
   padding: 80px 20px;
-  color: #60608a;
+  color: var(--text-dim);
 }
 
 .breadcrumb {
@@ -15,21 +15,41 @@
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  color: #60608a;
+  color: var(--text-dim);
   margin-bottom: 24px;
 }
 
 .breadcrumbLink {
-  color: #6366f1;
-  transition: color 0.2s;
+  color: var(--accent);
+  font-weight: 600;
+  transition: color 0.2s var(--ease);
 }
 
 .breadcrumbLink:hover {
-  color: #818cf8;
+  color: var(--accent-hover);
 }
 
 .sep {
-  color: #3a3a54;
+  color: var(--border-strong);
+}
+
+.backBtn {
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 16px;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.backBtn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--bg-elev-2);
 }
 
 .topicHeader {
@@ -37,11 +57,14 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  background: #1a1a28;
-  border: 1px solid #2e2e44;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 32px;
+  background:
+    radial-gradient(600px circle at 100% 0%, var(--accent-soft), transparent 60%),
+    var(--bg-elev-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 36px;
+  box-shadow: var(--shadow-md);
 }
 
 .topicInfo {
@@ -53,15 +76,17 @@
 }
 
 .topicName {
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   font-weight: 800;
-  color: #e8e8f0;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 .topicDesc {
-  font-size: 0.9rem;
-  color: #a0a0b8;
+  font-size: 0.92rem;
+  color: var(--text-muted);
   white-space: pre-wrap;
+  line-height: 1.5;
 }
 
 .examInfo {
@@ -70,99 +95,114 @@
   align-items: center;
   font-size: 0.85rem;
   flex-wrap: wrap;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .examDate {
-  color: #a0a0b8;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .topicStats {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .statsCount {
   font-size: 0.78rem;
-  color: #60608a;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
 }
 
 .editTopicBtn {
   background: transparent;
-  border: 1px solid #3a3a54;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
-  padding: 5px 10px;
-  color: #a0a0b8;
+  padding: 6px 12px;
+  color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 600;
   margin-top: 4px;
-  transition: border-color 0.2s, color 0.2s;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
 }
 
 .editTopicBtn:hover {
-  border-color: #6366f1;
-  color: #e8e8f0;
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--accent-soft);
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .sectionTitle {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: #a0a0b8;
+  color: var(--text);
 }
 
 .createBtn {
-  background: #6366f1;
+  background: var(--accent-grad);
   border: none;
-  border-radius: 8px;
-  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  padding: 8px 15px;
   color: #fff;
   font-size: 0.87rem;
   font-weight: 600;
-  transition: background 0.2s;
+  box-shadow: var(--shadow-accent);
+  transition: filter 0.2s var(--ease), transform 0.1s var(--ease), box-shadow 0.2s var(--ease);
 }
 
 .createBtn:hover {
-  background: #4f52d9;
+  filter: brightness(1.1);
+  box-shadow: 0 10px 28px -8px rgba(108, 108, 240, 0.6);
+}
+
+.createBtn:active {
+  transform: translateY(1px);
 }
 
 .empty {
-  color: #60608a;
+  color: var(--text-dim);
   text-align: center;
-  padding: 40px 20px;
+  padding: 48px 20px;
+  background: var(--bg-elev-0);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
 }
 
 .deckList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .deckCard {
-  background: #1a1a28;
-  border: 1px solid #2e2e44;
-  border-radius: 10px;
-  padding: 14px 18px;
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.2s var(--ease), transform 0.15s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 
 .deckCard:hover {
-  background: #1e1e32;
-  transform: translateX(2px);
+  background: var(--bg-elev-2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
 }
 
 .deckInfo {
@@ -174,24 +214,25 @@
 }
 
 .deckName {
-  font-size: 0.97rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: #e8e8f0;
+  color: var(--text);
 }
 
 .deckDesc {
   font-size: 0.8rem;
-  color: #60608a;
+  color: var(--text-dim);
   white-space: pre-wrap;
 }
 
 .deckCount {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #a0a0b8;
+  color: var(--text-muted);
   letter-spacing: 0.03em;
   flex: 1;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .deckCardRight {
@@ -205,15 +246,16 @@
 
 .editDeckBtn {
   background: transparent;
-  border: 1px solid #3a3a54;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
-  padding: 3px 8px;
-  color: #60608a;
+  padding: 4px 9px;
+  color: var(--text-dim);
   font-size: 0.82rem;
-  transition: border-color 0.2s, color 0.2s;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
 }
 
 .editDeckBtn:hover {
-  border-color: #6366f1;
-  color: #e8e8f0;
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--accent-soft);
 }

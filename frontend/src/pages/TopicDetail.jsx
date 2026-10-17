@@ -133,6 +133,14 @@ export default function TopicDetail() {
         <span>{topic.name}</span>
       </div>
 
+      <button
+        className={styles.backBtn}
+        onClick={() => navigate('/')}
+        title="Zurück zum Dashboard"
+      >
+        ←
+      </button>
+
       <div className={styles.topicHeader}>
         <div className={styles.topicInfo}>
           <h1 className={styles.topicName}>{topic.name}</h1>

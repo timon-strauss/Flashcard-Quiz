@@ -15,11 +15,11 @@
 
 .savingHint {
   font-size: 0.8rem;
-  color: #6366f1;
+  color: var(--accent);
 }
 
 .empty {
-  color: #60608a;
+  color: var(--text-dim);
   font-size: 0.88rem;
   text-align: center;
   padding: 20px 0 8px;
@@ -40,8 +40,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #0f0f1a;
-  border: 1px solid #2e2e44;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 9px 12px;
   cursor: grab;
@@ -50,16 +50,16 @@
 }
 
 .row:hover {
-  border-color: #3a3a54;
+  border-color: var(--border-strong);
 }
 
 .rowDragging {
-  border-color: #6366f1;
-  background: #1a1a30;
+  border-color: var(--accent);
+  background: var(--bg-elev-2);
 }
 
 .handle {
-  color: #3a3a54;
+  color: var(--border-strong);
   font-size: 1.1rem;
   flex-shrink: 0;
   cursor: grab;
@@ -75,7 +75,7 @@
 
 .rowFront {
   font-size: 0.87rem;
-  color: #e8e8f0;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -83,14 +83,14 @@
 }
 
 .rowSep {
-  color: #3a3a54;
+  color: var(--border-strong);
   font-size: 0.8rem;
   flex-shrink: 0;
 }
 
 .rowBack {
   font-size: 0.87rem;
-  color: #a0a0b8;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -105,7 +105,7 @@
 
 /* Add section */
 .addSection {
-  border-top: 1px solid #2e2e44;
+  border-top: 1px solid var(--border);
   padding-top: 18px;
   margin-top: 18px;
 }
@@ -113,7 +113,7 @@
 .addTitle {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #a0a0b8;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 14px;
@@ -148,7 +148,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #6366f1;
+  color: var(--accent);
 }
 
 .addTextarea {
@@ -157,8 +157,8 @@
 
 .miniDrop {
   position: relative;
-  background: #1a1a28;
-  border: 1px dashed #2e2e44;
+  background: var(--bg-elev-1);
+  border: 1px dashed var(--border);
   border-radius: 6px;
   height: 44px;
   display: flex;
@@ -166,13 +166,13 @@
   justify-content: center;
   cursor: pointer;
   font-size: 0.78rem;
-  color: #60608a;
+  color: var(--text-dim);
   overflow: hidden;
   transition: border-color 0.2s;
 }
 
 .miniDrop:hover {
-  border-color: #6366f1;
+  border-color: var(--accent);
 }
 
 .miniImg {

@@ -12,7 +12,7 @@ export default function ProgressRing({ progress, size = 56, stroke = 4, color = 
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#2a2a3a"
+        stroke="rgba(255, 255, 255, 0.08)"
         strokeWidth={stroke}
       />
       <circle
@@ -26,15 +26,15 @@ export default function ProgressRing({ progress, size = 56, stroke = 4, color = 
         strokeDashoffset={offset}
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+        style={{ transition: 'stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1)', filter: `drop-shadow(0 0 4px ${color}66)` }}
       />
       <text
         x={size / 2}
         y={size / 2 + 5}
         textAnchor="middle"
-        fill="#e8e8f0"
+        fill="#ececf4"
         fontSize={size * 0.22}
-        fontWeight="600"
+        fontWeight="700"
       >
         {Math.round(progress * 100)}%
       </text>

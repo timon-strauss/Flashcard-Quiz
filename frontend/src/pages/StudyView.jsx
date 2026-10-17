@@ -14,6 +14,8 @@ export default function StudyView() {
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [answered, setAnswered] = useState(false)
+  const [noTransition, setNoTransition] = useState(false)
+  const [slideAnim, setSlideAnim] = useState(null) // 'exitLeft'|'exitRight'|'enterRight'|'enterLeft'|null
   const [showCardManager, setShowCardManager] = useState(false)
   const [showEditDeck, setShowEditDeck] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -30,17 +32,39 @@ export default function StudyView() {
 
   useEffect(() => { load() }, [deckId])
 
+  useEffect(() => {
+    function onKey(e) {
+      if (showCardManager || showEditDeck) return
+      if (e.key === 'ArrowLeft') handlePrev()
+      else if (e.key === 'ArrowRight') handleNext()
+      else if (e.key === ' ') { e.preventDefault(); handleFlip() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [index, flipped, answered, cards, showCardManager, showEditDeck])
+
   const current = cards[index] ?? null
 
   function markSeenIfNeeded(card) {
     if (card) markCardSeen(card.id).catch(() => {})
   }
 
-  function goTo(newIndex) {
-    setFlipped(false)
-    setAnswered(false)
-    setIndex(newIndex)
-    if (cards[newIndex]) markSeenIfNeeded(cards[newIndex])
+  function goTo(newIndex, direction = 'left') {
+    const exitAnim = direction === 'left' ? 'exitLeft' : 'exitRight'
+    const enterAnim = direction === 'left' ? 'enterRight' : 'enterLeft'
+    setSlideAnim(exitAnim)
+    setTimeout(() => {
+      setNoTransition(true)
+      setFlipped(false)
+      setAnswered(false)
+      setIndex(newIndex)
+      if (cards[newIndex]) markSeenIfNeeded(cards[newIndex])
+      setSlideAnim(enterAnim)
+      requestAnimationFrame(() => {
+        setNoTransition(false)
+        setTimeout(() => setSlideAnim(null), 150)
+      })
+    }, 120)
   }
 
   function handleFlip() {
@@ -57,7 +81,7 @@ export default function StudyView() {
     })
     const next = index + 1
     if (next < cards.length) {
-      goTo(next)
+      goTo(next, 'left')
     } else {
       setFlipped(false)
       setAnswered(false)
@@ -66,12 +90,12 @@ export default function StudyView() {
   }
 
   function handlePrev() {
-    if (index > 0) goTo(index - 1)
+    if (index > 0) goTo(index - 1, 'right')
   }
 
   function handleNext() {
     if (index < cards.length - 1) {
-      goTo(index + 1)
+      goTo(index + 1, 'left')
     } else if (index === cards.length - 1) {
       setFlipped(false)
       setAnswered(false)
@@ -229,6 +253,13 @@ export default function StudyView() {
       <Breadcrumb deck={deck} />
 
       <div className={styles.topBar}>
+        <button
+          className={styles.backBtn}
+          onClick={() => deck.topic_id ? navigate(`/topics/${deck.topic_id}`) : navigate('/')}
+          title="Zurück"
+        >
+          ←
+        </button>
         <div className={styles.deckMeta}>
           <h1 className={styles.deckName}>{deck.name}</h1>
           <span className={styles.counter}>
@@ -256,8 +287,9 @@ export default function StudyView() {
         />
       </div>
 
-      <div className={styles.cardScene} onClick={handleFlip}>
-        <div className={`${styles.cardInner} ${flipped ? styles.flipped : ''}`}>
+      <div className={styles.cardSceneWrap}>
+        <div className={`${styles.cardScene} ${slideAnim ? styles[slideAnim] : ''}`} onClick={slideAnim ? undefined : handleFlip}>
+          <div className={`${styles.cardInner} ${flipped ? styles.flipped : ''} ${noTransition ? styles.noTransition : ''}`}>
           <div className={styles.cardFace}>
             <span className={styles.sideHint}>Vorderseite</span>
             <div className={styles.cardContent}>
@@ -275,6 +307,7 @@ export default function StudyView() {
                 <img src={`/uploads/${card.back_image}`} alt="" className={styles.cardImage} />
               )}
             </div>
+          </div>
           </div>
         </div>
       </div>
