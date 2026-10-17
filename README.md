@@ -39,11 +39,32 @@ Runs on **http://localhost:8000**. Interactive API docs available at http://loca
 
 ```bash
 cd frontend
-npm install
+npm install        # only needed once
 npm run dev
 ```
 
-Runs on **http://localhost:5173**. API calls are automatically proxied to the backend via Vite's dev proxy — no CORS issues, no configuration needed.
+Runs on **http://localhost:5173**. API calls are automatically proxied to the backend via Vite's dev proxy — no CORS configuration needed.
+
+> **Hinweis:** Das Frontend erwartet, dass das Backend unter `http://localhost:8000` läuft. Starte das Backend zuerst, bevor du das Frontend öffnest.
+
+### Alles zusammen starten (lokal)
+
+Öffne zwei Terminals und führe folgendes aus:
+
+**Terminal 1 — Backend:**
+```bash
+source backend/.venv/bin/activate
+cd backend && uvicorn app.main:app --reload
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm install        # nur beim ersten Mal nötig
+npm run dev
+```
+
+Dann im Browser öffnen: **http://localhost:5173**
 
 ## Production (Docker)
 

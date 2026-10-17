@@ -1,0 +1,214 @@
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+.loading {
+  text-align: center;
+  padding: 80px 20px;
+  color: #60608a;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #60608a;
+  margin-bottom: 24px;
+}
+
+.breadcrumbLink {
+  color: #6366f1;
+  transition: color 0.2s;
+}
+
+.breadcrumbLink:hover {
+  color: #818cf8;
+}
+
+.sep {
+  color: #3a3a54;
+}
+
+.topicHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  background: #1a1a28;
+  border: 1px solid #2e2e44;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.topicInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.topicName {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #e8e8f0;
+}
+
+.topicDesc {
+  font-size: 0.9rem;
+  color: #a0a0b8;
+}
+
+.examInfo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.examDate {
+  color: #a0a0b8;
+}
+
+.topicStats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.statsCount {
+  font-size: 0.78rem;
+  color: #60608a;
+}
+
+.editTopicBtn {
+  background: transparent;
+  border: 1px solid #3a3a54;
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: #a0a0b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 4px;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.editTopicBtn:hover {
+  border-color: #6366f1;
+  color: #e8e8f0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #a0a0b8;
+}
+
+.createBtn {
+  background: #6366f1;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  color: #fff;
+  font-size: 0.87rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.createBtn:hover {
+  background: #4f52d9;
+}
+
+.empty {
+  color: #60608a;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.deckList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deckCard {
+  background: #1a1a28;
+  border: 1px solid #2e2e44;
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.deckCard:hover {
+  background: #1e1e32;
+  transform: translateX(2px);
+}
+
+.deckInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.deckName {
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: #e8e8f0;
+}
+
+.deckDesc {
+  font-size: 0.8rem;
+  color: #60608a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deckCount {
+  font-size: 0.78rem;
+  color: #60608a;
+}
+
+.deckCardRight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.editDeckBtn {
+  background: transparent;
+  border: 1px solid #3a3a54;
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: #60608a;
+  font-size: 0.82rem;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.editDeckBtn:hover {
+  border-color: #6366f1;
+  color: #e8e8f0;
+}

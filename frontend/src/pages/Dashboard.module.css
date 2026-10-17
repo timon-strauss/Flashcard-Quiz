@@ -1,0 +1,202 @@
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #e8e8f0;
+}
+
+.subheading {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #a0a0b8;
+  margin-top: 48px;
+  margin-bottom: 16px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 10px;
+}
+
+.createBtn {
+  background: transparent;
+  border: 1px solid #3a3a54;
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #a0a0b8;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.createBtn:hover {
+  border-color: #6366f1;
+  color: #e8e8f0;
+}
+
+.createBtnPrimary {
+  background: #6366f1;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.createBtnPrimary:hover {
+  background: #4f52d9;
+}
+
+.loading {
+  text-align: center;
+  padding: 80px 20px;
+  color: #6060808;
+  color: #60608a;
+  font-size: 1.1rem;
+}
+
+.empty {
+  color: #60608a;
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  background: #1a1a28;
+  border: 1px solid #2e2e44;
+  border-left: 3px solid var(--status-color);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.card:hover {
+  background: #1e1e32;
+  transform: translateX(2px);
+}
+
+.cardLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--status-color);
+  flex-shrink: 0;
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cardName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e8e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardDesc {
+  font-size: 0.82rem;
+  color: #6060808;
+  color: #60608a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.examDate {
+  font-size: 0.8rem;
+  color: #a0a0b8;
+}
+
+.daysLeft {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.noExam {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.statusLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cardRight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cardCount {
+  font-size: 0.75rem;
+  color: #60608a;
+}
+
+.editBtn {
+  background: transparent;
+  border: 1px solid #3a3a54;
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: #60608a;
+  font-size: 0.82rem;
+  margin-top: 2px;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.editBtn:hover {
+  border-color: #6366f1;
+  color: #e8e8f0;
+}

@@ -1,0 +1,63 @@
+.actionsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.deleteBtn {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  padding: 9px 16px;
+  color: #ef4444;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.deleteBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+.confirmWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.confirmText {
+  font-size: 0.95rem;
+  color: #a0a0b8;
+  line-height: 1.6;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.confirmText strong {
+  color: #ef4444;
+}
+
+.deleteConfirmBtn {
+  background: #ef4444;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 20px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.deleteConfirmBtn:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.deleteConfirmBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

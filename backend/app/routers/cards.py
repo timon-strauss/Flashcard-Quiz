@@ -44,7 +44,32 @@ def get_card(card_id: int):
 
 
 @router.put("/{card_id}", response_model=CardResponse)
-def update_card(card_id: int, body: CardUpdate):
+async def update_card(
+    card_id: int,
+    front: Optional[str] = Form(None),
+    back: Optional[str] = Form(None),
+    front_image: Optional[UploadFile] = File(None),
+    back_image: Optional[UploadFile] = File(None),
+    remove_front_image: Optional[str] = Form(None),
+    remove_back_image: Optional[str] = Form(None),
+):
+    updates: dict = {}
+    if front is not None:
+        updates["front"] = front
+    if back is not None:
+        updates["back"] = back
+
+    if front_image and front_image.filename:
+        updates["front_image"] = save_image(front_image, await front_image.read())
+    elif remove_front_image == "true":
+        updates["front_image"] = None
+
+    if back_image and back_image.filename:
+        updates["back_image"] = save_image(back_image, await back_image.read())
+    elif remove_back_image == "true":
+        updates["back_image"] = None
+
+    body = CardUpdate(**updates)
     card = card_service.update_card(card_id, body)
     if card is None:
         raise HTTPException(status_code=404, detail="Card not found")
