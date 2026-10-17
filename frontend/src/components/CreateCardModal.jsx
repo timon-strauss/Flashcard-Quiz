@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import { createCard } from '../api/client'
 import styles from './Modal.module.css'
 import cardStyles from './CreateCardModal.module.css'
@@ -64,7 +64,6 @@ export default function CreateCardModal({ deckId, onClose, onCreated }) {
         <h2 className={styles.title}>Neue Karte erstellen</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={cardStyles.sides}>
-            {/* Front side */}
             <div className={cardStyles.side}>
               <span className={cardStyles.sideLabel}>Vorderseite</span>
               <textarea
@@ -82,7 +81,16 @@ export default function CreateCardModal({ deckId, onClose, onCreated }) {
                 onClick={() => frontInputRef.current?.click()}
               >
                 {frontPreview ? (
-                  <img src={frontPreview} alt="Vorschau" className={cardStyles.preview} />
+                  <>
+                    <img src={frontPreview} alt="Vorschau" className={cardStyles.preview} />
+                    <button
+                      type="button"
+                      className={cardStyles.removeX}
+                      onClick={(e) => { e.stopPropagation(); setFrontImage(null); setFrontPreview(null) }}
+                    >
+                      ×
+                    </button>
+                  </>
                 ) : (
                   <span>Bild hierher ziehen oder klicken</span>
                 )}
@@ -94,18 +102,8 @@ export default function CreateCardModal({ deckId, onClose, onCreated }) {
                 style={{ display: 'none' }}
                 onChange={(e) => handleImageFile(e.target.files[0], 'front')}
               />
-              {frontPreview && (
-                <button
-                  type="button"
-                  className={cardStyles.removeBtn}
-                  onClick={() => { setFrontImage(null); setFrontPreview(null) }}
-                >
-                  Bild entfernen
-                </button>
-              )}
             </div>
 
-            {/* Back side */}
             <div className={cardStyles.side}>
               <span className={cardStyles.sideLabel}>Rückseite</span>
               <textarea
@@ -123,7 +121,16 @@ export default function CreateCardModal({ deckId, onClose, onCreated }) {
                 onClick={() => backInputRef.current?.click()}
               >
                 {backPreview ? (
-                  <img src={backPreview} alt="Vorschau" className={cardStyles.preview} />
+                  <>
+                    <img src={backPreview} alt="Vorschau" className={cardStyles.preview} />
+                    <button
+                      type="button"
+                      className={cardStyles.removeX}
+                      onClick={(e) => { e.stopPropagation(); setBackImage(null); setBackPreview(null) }}
+                    >
+                      ×
+                    </button>
+                  </>
                 ) : (
                   <span>Bild hierher ziehen oder klicken</span>
                 )}
@@ -135,15 +142,6 @@ export default function CreateCardModal({ deckId, onClose, onCreated }) {
                 style={{ display: 'none' }}
                 onChange={(e) => handleImageFile(e.target.files[0], 'back')}
               />
-              {backPreview && (
-                <button
-                  type="button"
-                  className={cardStyles.removeBtn}
-                  onClick={() => { setBackImage(null); setBackPreview(null) }}
-                >
-                  Bild entfernen
-                </button>
-              )}
             </div>
           </div>
 

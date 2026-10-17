@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { fetchDeck, fetchDeckCards, markCardSeen, setCardMemorized } from '../api/client'
 import ProgressRing from '../components/ProgressRing'
-import CreateCardModal from '../components/CreateCardModal'
+import CardManagerModal from '../components/CardManagerModal'
 import EditDeckModal from '../components/EditDeckModal'
 import styles from './StudyView.module.css'
 
@@ -14,7 +14,7 @@ export default function StudyView() {
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [answered, setAnswered] = useState(false)
-  const [showCardModal, setShowCardModal] = useState(false)
+  const [showCardManager, setShowCardManager] = useState(false)
   const [showEditDeck, setShowEditDeck] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -44,10 +44,8 @@ export default function StudyView() {
   }
 
   function handleFlip() {
-    if (!flipped) {
-      setFlipped(true)
-      setAnswered(true)
-    }
+    setFlipped((f) => !f)
+    if (!flipped) setAnswered(true)
   }
 
   function handleAnswer(memorized) {
@@ -72,12 +70,13 @@ export default function StudyView() {
   }
 
   function handleNext() {
-    if (index < cards.length - 1) goTo(index + 1)
-  }
-
-  function handleCardCreated(card) {
-    setShowCardModal(false)
-    setCards((prev) => [...prev, card])
+    if (index < cards.length - 1) {
+      goTo(index + 1)
+    } else if (index === cards.length - 1) {
+      setFlipped(false)
+      setAnswered(false)
+      setIndex(cards.length)
+    }
   }
 
   function restart() {
@@ -131,19 +130,35 @@ export default function StudyView() {
             <button className={styles.restartBtn} onClick={restart}>
               Nochmal
             </button>
-            <button className={styles.createCardBtn} onClick={() => setShowCardModal(true)}>
-              + Karte
+            <button
+              className={styles.navBtn}
+              onClick={() => goTo(cards.length - 1)}
+            >
+              ← Letzte Karte
             </button>
-            <button className={styles.editDeckBtn} onClick={() => setShowEditDeck(true)}>
-              ✎ Deck
-            </button>
+            {deck.topic_id ? (
+              <button
+                className={styles.topicBtn}
+                onClick={() => navigate(`/topics/${deck.topic_id}`)}
+              >
+                Zurück zum Thema
+              </button>
+            ) : (
+              <button
+                className={styles.topicBtn}
+                onClick={() => navigate('/')}
+              >
+                Zurück
+              </button>
+            )}
           </div>
         </div>
-        {showCardModal && (
-          <CreateCardModal
+        {showCardManager && (
+          <CardManagerModal
             deckId={Number(deckId)}
-            onClose={() => setShowCardModal(false)}
-            onCreated={handleCardCreated}
+            initialCards={cards}
+            onClose={() => setShowCardManager(false)}
+            onCardsChanged={handleCardsChanged}
           />
         )}
         {showEditDeck && (
@@ -167,7 +182,7 @@ export default function StudyView() {
         <div className={styles.finishedWrap}>
           <p className={styles.finishedSub}>Dieses Deck hat noch keine Karten.</p>
           <div className={styles.finishedActions}>
-            <button className={styles.createCardBtn} onClick={() => setShowCardModal(true)}>
+            <button className={styles.createCardBtn} onClick={() => setShowCardManager(true)}>
               + Erste Karte erstellen
             </button>
             <button className={styles.editDeckBtn} onClick={() => setShowEditDeck(true)}>
@@ -175,11 +190,12 @@ export default function StudyView() {
             </button>
           </div>
         </div>
-        {showCardModal && (
-          <CreateCardModal
+        {showCardManager && (
+          <CardManagerModal
             deckId={Number(deckId)}
-            onClose={() => setShowCardModal(false)}
-            onCreated={handleCardCreated}
+            initialCards={cards}
+            onClose={() => setShowCardManager(false)}
+            onCardsChanged={handleCardsChanged}
           />
         )}
         {showEditDeck && (
@@ -211,7 +227,7 @@ export default function StudyView() {
         </div>
         <div className={styles.topRight}>
           <ProgressRing progress={progress} size={52} stroke={4} color="#6366f1" />
-          <button className={styles.createCardBtn} onClick={() => setShowCardModal(true)}>
+          <button className={styles.createCardBtn} onClick={() => setShowCardManager(true)}>
             + Karte
           </button>
           <button className={styles.editDeckBtn} onClick={() => setShowEditDeck(true)}>
@@ -227,35 +243,24 @@ export default function StudyView() {
         />
       </div>
 
-      <div className={styles.cardScene} onClick={!flipped ? handleFlip : undefined}>
+      <div className={styles.cardScene} onClick={handleFlip}>
         <div className={`${styles.cardInner} ${flipped ? styles.flipped : ''}`}>
           <div className={styles.cardFace}>
             <span className={styles.sideHint}>Vorderseite</span>
             <div className={styles.cardContent}>
-              {card.front_image && (
-                <img
-                  src={`/uploads/${card.front_image}`}
-                  alt=""
-                  className={styles.cardImage}
-                />
-              )}
               <p className={styles.cardText}>{card.front}</p>
+              {card.front_image && (
+                <img src={`/uploads/${card.front_image}`} alt="" className={styles.cardImage} />
+              )}
             </div>
-            {!flipped && (
-              <span className={styles.flipHint}>Klicken zum Aufdecken</span>
-            )}
           </div>
           <div className={`${styles.cardFace} ${styles.cardBack}`}>
             <span className={styles.sideHint}>Rückseite</span>
             <div className={styles.cardContent}>
-              {card.back_image && (
-                <img
-                  src={`/uploads/${card.back_image}`}
-                  alt=""
-                  className={styles.cardImage}
-                />
-              )}
               <p className={styles.cardText}>{card.back}</p>
+              {card.back_image && (
+                <img src={`/uploads/${card.back_image}`} alt="" className={styles.cardImage} />
+              )}
             </div>
           </div>
         </div>
@@ -283,17 +288,17 @@ export default function StudyView() {
         <button
           className={styles.navBtn}
           onClick={handleNext}
-          disabled={index >= cards.length - 1}
         >
           Weiter →
         </button>
       </div>
 
-      {showCardModal && (
-        <CreateCardModal
+      {showCardManager && (
+        <CardManagerModal
           deckId={Number(deckId)}
-          onClose={() => setShowCardModal(false)}
-          onCreated={handleCardCreated}
+          initialCards={cards}
+          onClose={() => setShowCardManager(false)}
+          onCardsChanged={handleCardsChanged}
         />
       )}
       {showEditDeck && (

@@ -113,7 +113,18 @@ class SQLiteAPI(DatabaseAPI):
     def list_cards_by_deck(self, deck_id: id) -> list[CardResponse] | None:
         if self.db.get(Deck, deck_id) is None:
             return None
-        rows = self.db.query(Card).filter(Card.deck_id == deck_id).all()
+        rows = self.db.query(Card).filter(Card.deck_id == deck_id).order_by(Card.position, Card.id).all()
+        return [CardResponse.model_validate(r) for r in rows]
+
+    def reorder_cards(self, deck_id: int, card_ids: list[int]) -> list[CardResponse] | None:
+        if self.db.get(Deck, deck_id) is None:
+            return None
+        for pos, card_id in enumerate(card_ids):
+            row = self.db.get(Card, card_id)
+            if row and row.deck_id == deck_id:
+                row.position = pos
+        self.db.commit()
+        rows = self.db.query(Card).filter(Card.deck_id == deck_id).order_by(Card.position, Card.id).all()
         return [CardResponse.model_validate(r) for r in rows]
 
     def list_cards_by_topic(self, topic_id: id) -> list[CardResponse] | None:
@@ -136,7 +147,8 @@ class SQLiteAPI(DatabaseAPI):
     def create_card(self, create_card: CardCreate) -> CardResponse | None:
         if self.db.get(Deck, create_card.deck_id) is None:
             return None
-        row = Card(**create_card.model_dump())
+        count = self.db.query(Card).filter(Card.deck_id == create_card.deck_id).count()
+        row = Card(**create_card.model_dump(), position=count)
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)

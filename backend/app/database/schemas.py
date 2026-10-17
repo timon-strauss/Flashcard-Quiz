@@ -54,6 +54,7 @@ class CardResponse(CardBase):
     id: int
     memorized: bool = False
     last_seen_at: datetime | None = None
+    position: int = 0
 
 class CardCreate(CardBase):
     pass

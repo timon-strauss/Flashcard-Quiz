@@ -29,6 +29,7 @@
 }
 
 .dropzone {
+  position: relative;
   border: 2px dashed #3a3a54;
   border-radius: 8px;
   padding: 12px;
@@ -37,11 +38,11 @@
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
-  color: #6060808;
   color: #60608a;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
   text-align: center;
+  overflow: hidden;
 }
 
 .dropzone:hover {
@@ -56,16 +57,25 @@
   border-radius: 6px;
 }
 
-.removeBtn {
-  background: transparent;
+.removeX {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ef4444;
   border: none;
-  color: #f87171;
-  font-size: 0.78rem;
-  padding: 0;
-  text-align: left;
-  text-decoration: underline;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.removeBtn:hover {
-  color: #fca5a5;
+.removeX:hover {
+  background: #dc2626;
 }

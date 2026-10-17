@@ -27,6 +27,8 @@ export const createDeck = (data) => request('/decks', { method: 'POST', body: JS
 export const updateDeck = (id, data) => request(`/decks/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteDeck = (id) => request(`/decks/${id}`, { method: 'DELETE' })
 export const fetchDeckCards = (deckId) => request(`/decks/${deckId}/cards`)
+export const reorderDeckCards = (deckId, order) =>
+  request(`/decks/${deckId}/card-order`, { method: 'PATCH', body: JSON.stringify({ order }) })
 
 // Cards
 export const fetchCard = (id) => request(`/cards/${id}`)

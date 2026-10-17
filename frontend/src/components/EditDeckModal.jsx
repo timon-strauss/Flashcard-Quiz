@@ -3,6 +3,7 @@ import { updateDeck, deleteDeck, updateCard, deleteCard } from '../api/client'
 import styles from './Modal.module.css'
 import editStyles from './EditTopicModal.module.css'
 import deckStyles from './EditDeckModal.module.css'
+import CardManagerModal from './CardManagerModal'
 
 const BASE = '/api'
 
@@ -130,7 +131,16 @@ function CardRow({ card, onUpdated, onDeleted }) {
             onClick={() => frontRef.current?.click()}
           >
             {frontPreview ? (
-              <img src={frontPreview} alt="" className={deckStyles.miniPreview} />
+              <>
+                <img src={frontPreview} alt="" className={deckStyles.miniPreview} />
+                <button
+                  type="button"
+                  className={deckStyles.removeX}
+                  onClick={(e) => { e.stopPropagation(); clearFrontImage() }}
+                >
+                  ×
+                </button>
+              </>
             ) : (
               <span>Bild</span>
             )}
@@ -142,11 +152,6 @@ function CardRow({ card, onUpdated, onDeleted }) {
             style={{ display: 'none' }}
             onChange={(e) => handleImageFile(e.target.files[0], 'front')}
           />
-          {frontPreview && (
-            <button type="button" className={deckStyles.removeImgBtn} onClick={clearFrontImage}>
-              × Bild entfernen
-            </button>
-          )}
         </div>
 
         <div className={deckStyles.editSide}>
@@ -162,7 +167,16 @@ function CardRow({ card, onUpdated, onDeleted }) {
             onClick={() => backRef.current?.click()}
           >
             {backPreview ? (
-              <img src={backPreview} alt="" className={deckStyles.miniPreview} />
+              <>
+                <img src={backPreview} alt="" className={deckStyles.miniPreview} />
+                <button
+                  type="button"
+                  className={deckStyles.removeX}
+                  onClick={(e) => { e.stopPropagation(); clearBackImage() }}
+                >
+                  ×
+                </button>
+              </>
             ) : (
               <span>Bild</span>
             )}
@@ -174,11 +188,6 @@ function CardRow({ card, onUpdated, onDeleted }) {
             style={{ display: 'none' }}
             onChange={(e) => handleImageFile(e.target.files[0], 'back')}
           />
-          {backPreview && (
-            <button type="button" className={deckStyles.removeImgBtn} onClick={clearBackImage}>
-              × Bild entfernen
-            </button>
-          )}
         </div>
       </div>
 
@@ -206,6 +215,7 @@ export default function EditDeckModal({ deck, cards: initialCards, onClose, onUp
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showCardManager, setShowCardManager] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -329,9 +339,18 @@ export default function EditDeckModal({ deck, cards: initialCards, onClose, onUp
 
             {cards.length > 0 && (
               <div className={deckStyles.cardSection}>
-                <h3 className={deckStyles.cardSectionTitle}>
-                  Karten ({cards.length})
-                </h3>
+                <div className={deckStyles.cardSectionHeader}>
+                  <h3 className={deckStyles.cardSectionTitle}>
+                    Karten ({cards.length})
+                  </h3>
+                  <button
+                    type="button"
+                    className={deckStyles.manageCardsBtn}
+                    onClick={() => setShowCardManager(true)}
+                  >
+                    + Karte hinzufügen
+                  </button>
+                </div>
                 <div className={deckStyles.cardList}>
                   {cards.map((card) => (
                     <CardRow
@@ -346,11 +365,31 @@ export default function EditDeckModal({ deck, cards: initialCards, onClose, onUp
             )}
 
             {cards.length === 0 && (
-              <p className={deckStyles.noCards}>Keine Karten in diesem Deck.</p>
+              <div className={deckStyles.noCardsRow}>
+                <p className={deckStyles.noCards}>Keine Karten in diesem Deck.</p>
+                <button
+                  type="button"
+                  className={deckStyles.manageCardsBtn}
+                  onClick={() => setShowCardManager(true)}
+                >
+                  + Karte hinzufügen
+                </button>
+              </div>
             )}
           </>
         )}
       </div>
+      {showCardManager && (
+        <CardManagerModal
+          deckId={deck.id}
+          initialCards={cards}
+          onClose={() => setShowCardManager(false)}
+          onCardsChanged={(newCards) => {
+            setCards(newCards)
+            onCardsChanged?.(newCards)
+          }}
+        />
+      )}
     </div>
   )
 }

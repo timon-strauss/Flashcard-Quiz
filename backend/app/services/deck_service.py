@@ -81,3 +81,11 @@ def list_deck_cards(deck_id: int) -> list[CardResponse] | None:
     if cards is None:
         return None
     return [CardResponse.model_validate(c) for c in cards]
+
+
+def reorder_deck_cards(deck_id: int, card_ids: list[int]) -> list[CardResponse] | None:
+    with db() as api:
+        cards = api.reorder_cards(deck_id, card_ids)
+    if cards is None:
+        return None
+    return [CardResponse.model_validate(c) for c in cards]

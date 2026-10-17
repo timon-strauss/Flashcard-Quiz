@@ -106,3 +106,8 @@ class CardResponse(BaseModel):
     back_image: str | None = None
     memorized: bool
     last_seen_at: datetime | None = None
+    position: int = 0
+
+
+class CardOrderUpdate(BaseModel):
+    order: list[int]  # list of card IDs in desired order

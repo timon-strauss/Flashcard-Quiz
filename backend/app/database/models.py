@@ -38,5 +38,6 @@ class Card(Base):
     back_image = Column(String, nullable=True)
     memorized = Column(Boolean, nullable=False, default=False)
     last_seen_at = Column(DateTime, nullable=True)
+    position = Column(Integer, nullable=False, default=0)
 
     deck = relationship("Deck", back_populates="cards")

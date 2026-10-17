@@ -119,9 +119,8 @@
 }
 
 .cardInner {
-  position: relative;
+  display: grid;
   width: 100%;
-  min-height: 280px;
   transform-style: preserve-3d;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -132,18 +131,18 @@
 }
 
 .cardFace {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   background: #1a1a28;
   border: 1px solid #2e2e44;
   border-radius: 16px;
   padding: 28px 32px;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 280px;
+  gap: 12px;
+  box-sizing: border-box;
 }
 
 .cardBack {
@@ -181,8 +180,9 @@
   font-size: 1.2rem;
   font-weight: 600;
   color: #e8e8f0;
-  text-align: center;
+  text-align: left;
   line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .flipHint {
@@ -283,6 +283,23 @@
   display: flex;
   gap: 12px;
   margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.topicBtn {
+  background: #6366f1;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.topicBtn:hover {
+  background: #4f52d9;
 }
 
 .restartBtn {

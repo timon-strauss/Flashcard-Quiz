@@ -1,0 +1,209 @@
+.mgrModal {
+  max-width: 680px;
+}
+
+.mgrBackdrop {
+  z-index: 200;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.savingHint {
+  font-size: 0.8rem;
+  color: #6366f1;
+}
+
+.empty {
+  color: #60608a;
+  font-size: 0.88rem;
+  text-align: center;
+  padding: 20px 0 8px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 340px;
+  overflow-y: auto;
+  margin-bottom: 4px;
+  padding-right: 2px;
+}
+
+/* Draggable row */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f0f1a;
+  border: 1px solid #2e2e44;
+  border-radius: 8px;
+  padding: 9px 12px;
+  cursor: grab;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.row:hover {
+  border-color: #3a3a54;
+}
+
+.rowDragging {
+  border-color: #6366f1;
+  background: #1a1a30;
+}
+
+.handle {
+  color: #3a3a54;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.rowContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rowFront {
+  font-size: 0.87rem;
+  color: #e8e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.rowSep {
+  color: #3a3a54;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.rowBack {
+  font-size: 0.87rem;
+  color: #a0a0b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.hasImg {
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* Add section */
+.addSection {
+  border-top: 1px solid #2e2e44;
+  padding-top: 18px;
+  margin-top: 18px;
+}
+
+.addTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #a0a0b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+}
+
+.addForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.addSides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .addSides {
+    grid-template-columns: 1fr;
+  }
+}
+
+.addSide {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sideLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6366f1;
+}
+
+.addTextarea {
+  font-size: 0.88rem !important;
+}
+
+.miniDrop {
+  position: relative;
+  background: #1a1a28;
+  border: 1px dashed #2e2e44;
+  border-radius: 6px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: #60608a;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.miniDrop:hover {
+  border-color: #6366f1;
+}
+
+.miniImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.removeX {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: none;
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.removeX:hover {
+  background: #dc2626;
+}
+
+.addActions {
+  display: flex;
+  justify-content: flex-end;
+}

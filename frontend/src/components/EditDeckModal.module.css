@@ -8,13 +8,42 @@
   padding-top: 20px;
 }
 
+.cardSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
 .cardSectionTitle {
   font-size: 0.9rem;
   font-weight: 700;
   color: #a0a0b8;
-  margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.manageCardsBtn {
+  background: transparent;
+  border: 1px solid #6366f1;
+  border-radius: 6px;
+  padding: 5px 12px;
+  color: #6366f1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+
+.manageCardsBtn:hover {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+}
+
+.noCardsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
 }
 
 .cardList {
@@ -26,8 +55,6 @@
 .noCards {
   color: #60608a;
   font-size: 0.88rem;
-  margin-top: 16px;
-  text-align: center;
 }
 
 /* Collapsed card row */
@@ -146,6 +173,7 @@
 }
 
 .miniDropzone {
+  position: relative;
   background: #1a1a28;
   border: 1px dashed #2e2e44;
   border-radius: 6px;
@@ -170,18 +198,27 @@
   object-fit: contain;
 }
 
-.removeImgBtn {
-  background: transparent;
+.removeX {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
   border: none;
-  color: #ef4444;
-  font-size: 0.78rem;
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  text-align: left;
-  padding: 0;
+  transition: background 0.15s;
 }
 
-.removeImgBtn:hover {
-  text-decoration: underline;
+.removeX:hover {
+  background: #dc2626;
 }
 
 .cardEditActions {

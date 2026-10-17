@@ -21,8 +21,8 @@ build/
 *.env.local
 
 # SQLite
-data/*.db
-backend/data/*.db
+data/*
+Upload/*
 
 # Node
 node_modules/

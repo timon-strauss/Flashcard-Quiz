@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Project root = flashcards/ (three levels up from this file)
@@ -23,3 +23,11 @@ def start_db():
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
     _UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     Base.metadata.create_all(bind=engine)
+    _migrate()
+
+def _migrate():
+    with engine.connect() as conn:
+        cols = [row[1] for row in conn.execute(text("PRAGMA table_info(cards)"))]
+        if "position" not in cols:
+            conn.execute(text("ALTER TABLE cards ADD COLUMN position INTEGER NOT NULL DEFAULT 0"))
+            conn.commit()
