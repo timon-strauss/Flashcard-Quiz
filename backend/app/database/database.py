@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # Project root = flashcards/ (three levels up from this file)
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 _DATA_DIR = _PROJECT_ROOT / "data"
-_UPLOADS_DIR = _PROJECT_ROOT / "uploads"
+_UPLOADS_DIR = _PROJECT_ROOT / "Upload"
 
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_DATA_DIR / 'flashcards.db'}")
 

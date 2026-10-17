@@ -2,6 +2,7 @@ from datetime import date
 from ..database import db
 from ..database.schemas import DeckCreate as DbDeckCreate, DeckUpdate as DbDeckUpdate
 from ..routers.schemas import DeckCreate, DeckUpdate, DeckLean, DeckResponse, DeckStats, CardResponse
+from .image_service import delete_image
 
 
 def _compute_deck_stats(cards) -> DeckStats:
@@ -62,7 +63,16 @@ def update_deck(deck_id: int, data: DeckUpdate) -> DeckResponse | None:
 
 def delete_deck(deck_id: int) -> bool:
     with db() as api:
-        return api.delete_deck(deck_id)
+        cards = api.list_cards_by_deck(deck_id) or []
+        images = [(c.front_image, c.back_image) for c in cards]
+        result = api.delete_deck(deck_id)
+    if result:
+        for front_image, back_image in images:
+            if front_image:
+                delete_image(front_image)
+            if back_image:
+                delete_image(back_image)
+    return result
 
 
 def list_deck_cards(deck_id: int) -> list[CardResponse] | None:

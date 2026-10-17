@@ -2,6 +2,7 @@ from datetime import date
 from ..database import db
 from ..database.schemas import TopicCreate as DbTopicCreate, TopicUpdate as DbTopicUpdate
 from ..routers.schemas import TopicCreate, TopicUpdate, TopicLean, TopicResponse, TopicStats, DeckLean
+from .image_service import delete_image
 
 
 def _compute_topic_stats(topic, cards, today: date) -> TopicStats:
@@ -71,7 +72,16 @@ def update_topic(topic_id: int, data: TopicUpdate, today: date) -> TopicResponse
 
 def delete_topic(topic_id: int) -> bool:
     with db() as api:
-        return api.delete_topic(topic_id)
+        cards = api.list_cards_by_topic(topic_id) or []
+        images = [(c.front_image, c.back_image) for c in cards]
+        result = api.delete_topic(topic_id)
+    if result:
+        for front_image, back_image in images:
+            if front_image:
+                delete_image(front_image)
+            if back_image:
+                delete_image(back_image)
+    return result
 
 
 def list_topic_decks(topic_id: int) -> list[DeckLean] | None:
