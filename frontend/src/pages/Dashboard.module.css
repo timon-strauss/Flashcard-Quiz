@@ -136,11 +136,8 @@
 
 .cardDesc {
   font-size: 0.82rem;
-  color: #6060808;
   color: #60608a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: pre-wrap;
 }
 
 .cardMeta {
@@ -176,13 +173,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
+  min-width: 64px;
 }
 
 .cardCount {
-  font-size: 0.75rem;
-  color: #60608a;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #a0a0b8;
+  letter-spacing: 0.03em;
 }
 
 .editBtn {

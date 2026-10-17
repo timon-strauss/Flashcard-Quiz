@@ -178,10 +178,10 @@ export default function TopicDetail() {
                   {deck.description && (
                     <span className={styles.deckDesc}>{deck.description}</span>
                   )}
-                  <span className={styles.deckCount}>
-                    {deck.stats?.memorized_cards ?? 0}/{deck.stats?.total_cards ?? 0} Karten
-                  </span>
                 </div>
+                <span className={styles.deckCount}>
+                  {deck.stats?.memorized_cards ?? 0}/{deck.stats?.total_cards ?? 0} Karten
+                </span>
                 <div className={styles.deckCardRight}>
                   <ProgressRing progress={deckProgress} size={52} stroke={4} color={color} />
                   <button
