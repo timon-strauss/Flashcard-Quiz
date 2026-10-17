@@ -2,12 +2,12 @@ from datetime import datetime
 
 import pytest
 
-from app.database.schemas import topicCreate, deckCreate, CardCreate, CardUpdate
+from app.database.schemas import TopicCreate, DeckCreate, CardCreate, CardUpdate
 
 
 @pytest.fixture
 def deck(api):
-    return api.create_deck(deckCreate(name="Default Deck"))
+    return api.create_deck(DeckCreate(name="Default Deck"))
 
 
 class TestListCards:
@@ -22,7 +22,7 @@ class TestListCards:
 
 class TestListCardsByDeck:
     def test_returns_cards_for_deck(self, api, deck):
-        deck2 = api.create_deck(deckCreate(name="Other Deck"))
+        deck2 = api.create_deck(DeckCreate(name="Other Deck"))
         api.create_card(CardCreate(front="Q1", back="A1", deck_id=deck.id))
         api.create_card(CardCreate(front="Q2", back="A2", deck_id=deck.id))
         api.create_card(CardCreate(front="Q3", back="A3", deck_id=deck2.id))
@@ -40,9 +40,9 @@ class TestListCardsByDeck:
 
 class TestListCardsByTopic:
     def test_returns_cards_across_decks_in_topic(self, api):
-        topic = api.create_topics(topicCreate(name="T"))
-        d1 = api.create_deck(deckCreate(name="D1", topic_id=topic.id))
-        d2 = api.create_deck(deckCreate(name="D2", topic_id=topic.id))
+        topic = api.create_topics(TopicCreate(name="T"))
+        d1 = api.create_deck(DeckCreate(name="D1", topic_id=topic.id))
+        d2 = api.create_deck(DeckCreate(name="D2", topic_id=topic.id))
         api.create_card(CardCreate(front="Q1", back="A1", deck_id=d1.id))
         api.create_card(CardCreate(front="Q2", back="A2", deck_id=d2.id))
         result = api.list_cards_by_topic(topic.id)
@@ -50,9 +50,9 @@ class TestListCardsByTopic:
         assert len(result) == 2
 
     def test_excludes_standalone_deck_cards(self, api):
-        topic = api.create_topics(topicCreate(name="T"))
-        topic_deck = api.create_deck(deckCreate(name="Linked", topic_id=topic.id))
-        standalone = api.create_deck(deckCreate(name="Standalone"))
+        topic = api.create_topics(TopicCreate(name="T"))
+        topic_deck = api.create_deck(DeckCreate(name="Linked", topic_id=topic.id))
+        standalone = api.create_deck(DeckCreate(name="Standalone"))
         api.create_card(CardCreate(front="Q1", back="A1", deck_id=topic_deck.id))
         api.create_card(CardCreate(front="Q2", back="A2", deck_id=standalone.id))
         result = api.list_cards_by_topic(topic.id)
@@ -62,8 +62,8 @@ class TestListCardsByTopic:
         assert api.list_cards_by_topic(999) is None
 
     def test_topic_with_no_cards_returns_empty_list(self, api):
-        topic = api.create_topics(topicCreate(name="Empty"))
-        api.create_deck(deckCreate(name="D", topic_id=topic.id))
+        topic = api.create_topics(TopicCreate(name="Empty"))
+        api.create_deck(DeckCreate(name="D", topic_id=topic.id))
         assert api.list_cards_by_topic(topic.id) == []
 
 
