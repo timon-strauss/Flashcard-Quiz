@@ -26,20 +26,20 @@ class SQLiteAPI(DatabaseAPI):
 
     def list_topics(self) -> list[topicResponse]:
         rows = self.db.query(Topic).all()
-        return [topicResponse.model_validate(r, from_attributes=True) for r in rows]
+        return [topicResponse.model_validate(r) for r in rows]
 
     def get_topic(self, topic_id: int) -> topicResponse | None:
         row = self.db.get(Topic, topic_id)
         if row is None:
             return None
-        return topicResponse.model_validate(row, from_attributes=True)
+        return topicResponse.model_validate(row)
 
     def create_topics(self, create_topic: topicCreate) -> topicResponse:
         row = Topic(**create_topic.model_dump())
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)
-        return topicResponse.model_validate(row, from_attributes=True)
+        return topicResponse.model_validate(row)
 
     def update_topics(self, update_topic: topicUpdate) -> topicResponse | None:
         row = self.db.get(Topic, update_topic.id)
@@ -49,7 +49,7 @@ class SQLiteAPI(DatabaseAPI):
             setattr(row, key, value)
         self.db.commit()
         self.db.refresh(row)
-        return topicResponse.model_validate(row, from_attributes=True)
+        return topicResponse.model_validate(row)
 
     def delete_topic(self, topic_id: int) -> bool:
         row = self.db.get(Topic, topic_id)
@@ -63,19 +63,19 @@ class SQLiteAPI(DatabaseAPI):
 
     def list_decks(self) -> list[deckResponse]:
         rows = self.db.query(Deck).all()
-        return [deckResponse.model_validate(r, from_attributes=True) for r in rows]
+        return [deckResponse.model_validate(r) for r in rows]
 
     def list_decks_by_topic(self, topic_id) -> list[deckResponse] | None:
         if self.db.get(Topic, topic_id) is None:
             return None
         rows = self.db.query(Deck).filter(Deck.topic_id == topic_id).all()
-        return [deckResponse.model_validate(r, from_attributes=True) for r in rows]
+        return [deckResponse.model_validate(r) for r in rows]
 
     def get_deck(self, deck_id: int) -> deckResponse | None:
         row = self.db.get(Deck, deck_id)
         if row is None:
             return None
-        return deckResponse.model_validate(row, from_attributes=True)
+        return deckResponse.model_validate(row)
 
     def create_deck(self, create_deck: deckCreate) -> deckResponse | None:
         if create_deck.topic_id is not None and self.db.get(Topic, create_deck.topic_id) is None:
@@ -84,7 +84,7 @@ class SQLiteAPI(DatabaseAPI):
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)
-        return deckResponse.model_validate(row, from_attributes=True)
+        return deckResponse.model_validate(row)
 
     def update_deck(self, update_deck: deckUpdate) -> deckResponse | None:
         row = self.db.get(Deck, update_deck.id)
@@ -94,7 +94,7 @@ class SQLiteAPI(DatabaseAPI):
             setattr(row, key, value)
         self.db.commit()
         self.db.refresh(row)
-        return deckResponse.model_validate(row, from_attributes=True)
+        return deckResponse.model_validate(row)
 
     def delete_deck(self, deck_id: int) -> bool:
         row = self.db.get(Deck, deck_id)
@@ -108,13 +108,13 @@ class SQLiteAPI(DatabaseAPI):
 
     def list_cards(self) -> list[CardResponse]:
         rows = self.db.query(Card).all()
-        return [CardResponse.model_validate(r, from_attributes=True) for r in rows]
+        return [CardResponse.model_validate(r) for r in rows]
 
     def list_cards_by_deck(self, deck_id: id) -> list[CardResponse] | None:
         if self.db.get(Deck, deck_id) is None:
             return None
         rows = self.db.query(Card).filter(Card.deck_id == deck_id).all()
-        return [CardResponse.model_validate(r, from_attributes=True) for r in rows]
+        return [CardResponse.model_validate(r) for r in rows]
 
     def list_cards_by_topic(self, topic_id: id) -> list[CardResponse] | None:
         if self.db.get(Topic, topic_id) is None:
@@ -125,13 +125,13 @@ class SQLiteAPI(DatabaseAPI):
             .filter(Deck.topic_id == topic_id)
             .all()
         )
-        return [CardResponse.model_validate(r, from_attributes=True) for r in rows]
+        return [CardResponse.model_validate(r) for r in rows]
 
     def get_card(self, card_id: int) -> CardResponse | None:
         row = self.db.get(Card, card_id)
         if row is None:
             return None
-        return CardResponse.model_validate(row, from_attributes=True)
+        return CardResponse.model_validate(row)
 
     def create_card(self, create_card: CardCreate) -> CardResponse | None:
         if self.db.get(Deck, create_card.deck_id) is None:
@@ -140,7 +140,7 @@ class SQLiteAPI(DatabaseAPI):
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)
-        return CardResponse.model_validate(row, from_attributes=True)
+        return CardResponse.model_validate(row)
 
     def update_card(self, create_update: CardUpdate) -> CardResponse | None:
         row = self.db.get(Card, create_update.id)
@@ -150,7 +150,7 @@ class SQLiteAPI(DatabaseAPI):
             setattr(row, key, value)
         self.db.commit()
         self.db.refresh(row)
-        return CardResponse.model_validate(row, from_attributes=True)
+        return CardResponse.model_validate(row)
 
     def delete_card(self, card_id: int) -> bool:
         row = self.db.get(Card, card_id)

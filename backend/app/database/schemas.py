@@ -1,14 +1,15 @@
 from datetime import date, datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # --- topic ---
 
 class topicBase(BaseModel):
-    name: str 
+    name: str
     description: str | None = None
     exam_date: date | None = None
 
 class topicResponse(topicBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
 
 class topicCreate(topicBase):
@@ -27,6 +28,7 @@ class deckBase(BaseModel):
     topic_id: int | None = None
 
 class deckResponse(deckBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
 
 class deckCreate(deckBase):
@@ -48,6 +50,7 @@ class CardBase(BaseModel):
     deck_id: int
 
 class CardResponse(CardBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     memorized: bool = False
     last_seen_at: datetime | None = None
