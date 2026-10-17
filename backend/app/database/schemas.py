@@ -3,38 +3,38 @@ from pydantic import BaseModel, ConfigDict
 
 # --- topic ---
 
-class topicBase(BaseModel):
+class TopicBase(BaseModel):
     name: str
     description: str | None = None
     exam_date: date | None = None
 
-class topicResponse(topicBase):
+class TopicResponse(TopicBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
-class topicCreate(topicBase):
+class TopicCreate(TopicBase):
     pass
 
-class topicUpdate(topicBase):
+class TopicUpdate(TopicBase):
     id: int
     name: str | None = None
 
 
 # --- Deck ---
 
-class deckBase(BaseModel):
+class DeckBase(BaseModel):
     name: str
     description: str | None = None
     topic_id: int | None = None
 
-class deckResponse(deckBase):
+class DeckResponse(DeckBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
-class deckCreate(deckBase):
+class DeckCreate(DeckBase):
     pass
 
-class deckUpdate(deckBase):
+class DeckUpdate(DeckBase):
     id: int
     name: str | None = None
     description: str | None = None

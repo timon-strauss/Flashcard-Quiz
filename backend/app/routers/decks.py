@@ -1,44 +1,53 @@
-from fastapi import APIRouter
-from .schemas import DeckCreate, DeckUpdate, DeckLean, DeckResponse, CardCreate, CardResponse, _not_implemented
+from fastapi import APIRouter, HTTPException
+from .schemas import DeckCreate, DeckUpdate, DeckLean, DeckResponse, CardResponse
+from ..services import deck_service
 
 router = APIRouter(prefix="/decks", tags=["decks"])
 
 
 @router.get("", response_model=list[DeckLean])
 def list_decks():
-    _not_implemented()
+    return deck_service.list_decks()
 
 
 @router.get("/overview", response_model=list[DeckResponse])
 def list_decks_overview():
-    _not_implemented()
+    return deck_service.list_decks_overview()
 
 
 @router.get("/{deck_id}", response_model=DeckResponse)
 def get_deck(deck_id: int):
-    _not_implemented()
+    deck = deck_service.get_deck(deck_id)
+    if deck is None:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    return deck
 
 
 @router.post("", response_model=DeckResponse)
 def create_deck(body: DeckCreate):
-    _not_implemented()
+    deck = deck_service.create_deck(body)
+    if deck is None:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    return deck
 
 
 @router.put("/{deck_id}", response_model=DeckResponse)
 def update_deck(deck_id: int, body: DeckUpdate):
-    _not_implemented()
+    deck = deck_service.update_deck(deck_id, body)
+    if deck is None:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    return deck
 
 
 @router.delete("/{deck_id}")
 def delete_deck(deck_id: int):
-    _not_implemented()
+    if not deck_service.delete_deck(deck_id):
+        raise HTTPException(status_code=404, detail="Deck not found")
 
 
 @router.get("/{deck_id}/cards", response_model=list[CardResponse])
 def list_deck_cards(deck_id: int):
-    _not_implemented()
-
-
-@router.post("/{deck_id}/cards", response_model=CardResponse)
-def create_card(deck_id: int, body: CardCreate):
-    _not_implemented()
+    cards = deck_service.list_deck_cards(deck_id)
+    if cards is None:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    return cards

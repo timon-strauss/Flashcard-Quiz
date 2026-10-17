@@ -1,7 +1,7 @@
 from . import DatabaseAPI
 from .schemas import (
-    topicResponse, topicCreate, topicUpdate,
-    deckResponse, deckCreate, deckUpdate,
+    TopicResponse, TopicCreate, TopicUpdate,
+    DeckResponse, DeckCreate, DeckUpdate,
     CardResponse, CardCreate, CardUpdate,
 )
 from .models import Topic, Deck, Card
@@ -24,24 +24,24 @@ class SQLiteAPI(DatabaseAPI):
 
     # --- topic ---
 
-    def list_topics(self) -> list[topicResponse]:
+    def list_topics(self) -> list[TopicResponse]:
         rows = self.db.query(Topic).all()
-        return [topicResponse.model_validate(r) for r in rows]
+        return [TopicResponse.model_validate(r) for r in rows]
 
-    def get_topic(self, topic_id: int) -> topicResponse | None:
+    def get_topic(self, topic_id: int) -> TopicResponse | None:
         row = self.db.get(Topic, topic_id)
         if row is None:
             return None
-        return topicResponse.model_validate(row)
+        return TopicResponse.model_validate(row)
 
-    def create_topics(self, create_topic: topicCreate) -> topicResponse:
+    def create_topics(self, create_topic: TopicCreate) -> TopicResponse:
         row = Topic(**create_topic.model_dump())
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)
-        return topicResponse.model_validate(row)
+        return TopicResponse.model_validate(row)
 
-    def update_topics(self, update_topic: topicUpdate) -> topicResponse | None:
+    def update_topics(self, update_topic: TopicUpdate) -> TopicResponse | None:
         row = self.db.get(Topic, update_topic.id)
         if row is None:
             return None
@@ -49,7 +49,7 @@ class SQLiteAPI(DatabaseAPI):
             setattr(row, key, value)
         self.db.commit()
         self.db.refresh(row)
-        return topicResponse.model_validate(row)
+        return TopicResponse.model_validate(row)
 
     def delete_topic(self, topic_id: int) -> bool:
         row = self.db.get(Topic, topic_id)
@@ -61,32 +61,32 @@ class SQLiteAPI(DatabaseAPI):
 
     # --- Decks ---
 
-    def list_decks(self) -> list[deckResponse]:
+    def list_decks(self) -> list[DeckResponse]:
         rows = self.db.query(Deck).all()
-        return [deckResponse.model_validate(r) for r in rows]
+        return [DeckResponse.model_validate(r) for r in rows]
 
-    def list_decks_by_topic(self, topic_id) -> list[deckResponse] | None:
+    def list_decks_by_topic(self, topic_id) -> list[DeckResponse] | None:
         if self.db.get(Topic, topic_id) is None:
             return None
         rows = self.db.query(Deck).filter(Deck.topic_id == topic_id).all()
-        return [deckResponse.model_validate(r) for r in rows]
+        return [DeckResponse.model_validate(r) for r in rows]
 
-    def get_deck(self, deck_id: int) -> deckResponse | None:
+    def get_deck(self, deck_id: int) -> DeckResponse | None:
         row = self.db.get(Deck, deck_id)
         if row is None:
             return None
-        return deckResponse.model_validate(row)
+        return DeckResponse.model_validate(row)
 
-    def create_deck(self, create_deck: deckCreate) -> deckResponse | None:
+    def create_deck(self, create_deck: DeckCreate) -> DeckResponse | None:
         if create_deck.topic_id is not None and self.db.get(Topic, create_deck.topic_id) is None:
             return None
         row = Deck(**create_deck.model_dump())
         self.db.add(row)
         self.db.commit()
         self.db.refresh(row)
-        return deckResponse.model_validate(row)
+        return DeckResponse.model_validate(row)
 
-    def update_deck(self, update_deck: deckUpdate) -> deckResponse | None:
+    def update_deck(self, update_deck: DeckUpdate) -> DeckResponse | None:
         row = self.db.get(Deck, update_deck.id)
         if row is None:
             return None
@@ -94,7 +94,7 @@ class SQLiteAPI(DatabaseAPI):
             setattr(row, key, value)
         self.db.commit()
         self.db.refresh(row)
-        return deckResponse.model_validate(row)
+        return DeckResponse.model_validate(row)
 
     def delete_deck(self, deck_id: int) -> bool:
         row = self.db.get(Deck, deck_id)

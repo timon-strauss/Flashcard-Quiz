@@ -80,6 +80,7 @@ class DeckResponse(BaseModel):
 # ── Cards ─────────────────────────────────────────────────────────────────────
 
 class CardCreate(BaseModel):
+    deck_id: int
     front: str
     back: str
     front_image: str | None = None

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from .schemas import topicResponse, topicUpdate, topicCreate, deckResponse, deckUpdate, deckCreate, CardResponse, CardUpdate, CardCreate
+from .schemas import TopicResponse, TopicUpdate, TopicCreate, DeckResponse, DeckUpdate, DeckCreate, CardResponse, CardUpdate, CardCreate
 
 
 class DatabaseAPI(ABC):
@@ -11,19 +11,19 @@ class DatabaseAPI(ABC):
 
     # --- topic ---
     @abstractmethod
-    def list_topics(self) -> list[topicResponse]:
+    def list_topics(self) -> list[TopicResponse]:
         ...
 
     @abstractmethod
-    def get_topic(self, topic_id: int) -> topicResponse | None:
+    def get_topic(self, topic_id: int) -> TopicResponse | None:
         ...
 
     @abstractmethod
-    def create_topics(self, create_topic: topicCreate) -> topicResponse:
+    def create_topics(self, create_topic: TopicCreate) -> TopicResponse:
         ...
 
     @abstractmethod
-    def update_topics(self, update_topic: topicUpdate) -> topicResponse | None:
+    def update_topics(self, update_topic: TopicUpdate) -> TopicResponse | None:
         ...
 
     @abstractmethod
@@ -35,25 +35,25 @@ class DatabaseAPI(ABC):
     # --- Decks ---
 
     @abstractmethod
-    def list_decks(self) -> list[deckResponse]:
+    def list_decks(self) -> list[DeckResponse]:
         ...
 
     @abstractmethod
-    def list_decks_by_topic(self, topic_id) -> list[deckResponse] | None:
+    def list_decks_by_topic(self, topic_id) -> list[DeckResponse] | None:
         """None if topic doesnt exist"""
         ...
 
     @abstractmethod
-    def get_deck(self, deck_id: int) -> deckResponse | None:
+    def get_deck(self, deck_id: int) -> DeckResponse | None:
         ...
 
     @abstractmethod
-    def create_deck(self, create_deck: deckCreate) -> deckResponse | None:
+    def create_deck(self, create_deck: DeckCreate) -> DeckResponse | None:
         """None if topic doesnt exist"""
         ...
 
     @abstractmethod
-    def update_deck(self, update_deck: deckUpdate) -> deckResponse | None:
+    def update_deck(self, update_deck: DeckUpdate) -> DeckResponse | None:
         ...
 
     @abstractmethod
