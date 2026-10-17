@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from fastapi import HTTPException
 
 
@@ -20,8 +20,11 @@ class TopicUpdate(BaseModel):
     exam_date: date | None = None
 
 class TopicLean(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
+    description: str | None = None
     exam_date: date | None = None
 
 class TopicStats(BaseModel):
@@ -31,6 +34,8 @@ class TopicStats(BaseModel):
     days_until_exam: int | None = None        # null = no exam_date
 
 class TopicResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     description: str | None = None
@@ -51,6 +56,8 @@ class DeckUpdate(BaseModel):
     topic_id: int | None = None
 
 class DeckLean(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     topic_id: int | None = None
@@ -61,6 +68,8 @@ class DeckStats(BaseModel):
     avg_days_since_seen: float | None = None  # null = empty deck
 
 class DeckResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     description: str | None = None
@@ -86,6 +95,8 @@ class CardMemorizedUpdate(BaseModel):
     memorized: bool
 
 class CardResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     deck_id: int
     front: str
