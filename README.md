@@ -66,19 +66,54 @@ npm run dev
 
 Dann im Browser öffnen: **http://localhost:5173**
 
-## Production (Docker)
+## Production (Podman)
+
+### First run
 
 ```bash
-docker-compose up --build
+cd ~/Desktop/flashcards
+podman build -t flashcards .
+podman run -d \
+  -p 3000:80 \
+  -v flashcards-data:/app/data \
+  -v flashcards-uploads:/app/uploads \
+  --name flashcards \
+  flashcards
 ```
 
-- Frontend: **http://localhost:3000**
-- Backend: **http://localhost:8000**
+App runs at **http://localhost:3000**. Other devices on the same network can reach it at `http://<your-ip>:3000`.
 
-The SQLite database is stored in `./data/flashcards.db` on the host and persists across container restarts. To stop without removing data:
+Data is stored in Podman-managed named volumes (`flashcards-data`, `flashcards-uploads`) — not in your project folder. It persists across container restarts and rebuilds.
+
+### Update after code changes
 
 ```bash
-docker-compose down
+podman stop flashcards
+podman rm flashcards
+podman build -t flashcards .
+podman run -d \
+  -p 3000:80 \
+  -v flashcards-data:/app/data \
+  -v flashcards-uploads:/app/uploads \
+  --name flashcards \
+  flashcards
+```
+
+The volumes are reattached automatically — no data is lost.
+
+### Stop / start
+
+```bash
+podman stop flashcards   # stop
+podman start flashcards  # start again (no rebuild needed)
+```
+
+### Manage volumes
+
+```bash
+podman volume ls                        # list volumes
+podman volume inspect flashcards-data   # see details
+podman volume rm flashcards-data        # delete volume (loses data!)
 ```
 
 ## Testing

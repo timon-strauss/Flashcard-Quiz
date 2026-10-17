@@ -1,12 +1,15 @@
 services:
   backend:
     build: ./backend
-    ports:
-      - "8000:8000"
+    environment:
+      DATA_DIR: /app/data
+      UPLOAD_DIR: /app/uploads
     volumes:
       - ./data:/app/data
+      - ./Upload:/app/uploads
     networks:
       - flashcards-net
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
@@ -16,6 +19,7 @@ services:
       - backend
     networks:
       - flashcards-net
+    restart: unless-stopped
 
 networks:
   flashcards-net:
