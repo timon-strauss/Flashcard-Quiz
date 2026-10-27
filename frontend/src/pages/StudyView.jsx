@@ -19,12 +19,21 @@ export default function StudyView() {
   const [showCardManager, setShowCardManager] = useState(false)
   const [showEditDeck, setShowEditDeck] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [hideMemorized, setHideMemorized] = useState(false)
+  // snapshot of the active list — only rebuilt when filter is toggled or cards are reloaded,
+  // so answering a card doesn't remove it from the current session mid-run
+  const [activeCards, setActiveCards] = useState([])
+
+  function buildActiveCards(cardList, hide) {
+    return hide ? cardList.filter((c) => !c.memorized) : cardList
+  }
 
   async function load() {
     try {
       const [deckData, cardsData] = await Promise.all([fetchDeck(deckId), fetchDeckCards(deckId)])
       setDeck(deckData)
       setCards(cardsData)
+      setActiveCards(buildActiveCards(cardsData, hideMemorized))
     } finally {
       setLoading(false)
     }
@@ -41,9 +50,9 @@ export default function StudyView() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [index, flipped, answered, cards, showCardManager, showEditDeck])
+  }, [index, flipped, answered, activeCards, showCardManager, showEditDeck])
 
-  const current = cards[index] ?? null
+  const current = activeCards[index] ?? null
 
   function markSeenIfNeeded(card) {
     if (card) markCardSeen(card.id).catch(() => {})
@@ -58,7 +67,7 @@ export default function StudyView() {
       setFlipped(false)
       setAnswered(false)
       setIndex(newIndex)
-      if (cards[newIndex]) markSeenIfNeeded(cards[newIndex])
+      if (activeCards[newIndex]) markSeenIfNeeded(activeCards[newIndex])
       setSlideAnim(enterAnim)
       requestAnimationFrame(() => {
         setNoTransition(false)
@@ -75,17 +84,22 @@ export default function StudyView() {
   function handleAnswer(memorized) {
     if (!current) return
     setCardMemorized(current.id, memorized).then(() => {
+      // update cards (source of truth for dot indicator + progress ring)
+      // but do NOT rebuild activeCards — the filter snapshot stays frozen until toggled
       setCards((prev) =>
+        prev.map((c) => (c.id === current.id ? { ...c, memorized } : c))
+      )
+      setActiveCards((prev) =>
         prev.map((c) => (c.id === current.id ? { ...c, memorized } : c))
       )
     })
     const next = index + 1
-    if (next < cards.length) {
+    if (next < activeCards.length) {
       goTo(next, 'left')
     } else {
       setFlipped(false)
       setAnswered(false)
-      setIndex(cards.length)
+      setIndex(activeCards.length)
     }
   }
 
@@ -94,12 +108,12 @@ export default function StudyView() {
   }
 
   function handleNext() {
-    if (index < cards.length - 1) {
+    if (index < activeCards.length - 1) {
       goTo(index + 1, 'left')
-    } else if (index === cards.length - 1) {
+    } else if (index === activeCards.length - 1) {
       setFlipped(false)
       setAnswered(false)
-      setIndex(cards.length)
+      setIndex(activeCards.length)
     }
   }
 
@@ -107,7 +121,16 @@ export default function StudyView() {
     setIndex(0)
     setFlipped(false)
     setAnswered(false)
-    if (cards[0]) markSeenIfNeeded(cards[0])
+    if (activeCards[0]) markSeenIfNeeded(activeCards[0])
+  }
+
+  function toggleFilter() {
+    const next = !hideMemorized
+    setHideMemorized(next)
+    setActiveCards(buildActiveCards(cards, next))
+    setIndex(0)
+    setFlipped(false)
+    setAnswered(false)
   }
 
   function handleDeckUpdated(updated) {
@@ -135,8 +158,10 @@ export default function StudyView() {
 
   function handleCardsChanged(newCards) {
     setCards(newCards)
-    if (index >= newCards.length && newCards.length > 0) {
-      setIndex(newCards.length - 1)
+    const newActive = buildActiveCards(newCards, hideMemorized)
+    setActiveCards(newActive)
+    if (index >= newActive.length && newActive.length > 0) {
+      setIndex(newActive.length - 1)
     }
     setFlipped(false)
     setAnswered(false)
@@ -150,7 +175,7 @@ export default function StudyView() {
     : 0
   const memorizedCount = cards.filter((c) => c.memorized).length
 
-  if (index >= cards.length && cards.length > 0) {
+  if (index >= activeCards.length && activeCards.length > 0) {
     return (
       <div className={styles.page}>
         <Breadcrumb deck={deck} />
@@ -166,7 +191,7 @@ export default function StudyView() {
             </button>
             <button
               className={styles.navBtn}
-              onClick={() => goTo(cards.length - 1)}
+              onClick={() => goTo(activeCards.length - 1)}
             >
               ← Letzte Karte
             </button>
@@ -209,16 +234,26 @@ export default function StudyView() {
     )
   }
 
-  if (cards.length === 0) {
+  if (activeCards.length === 0) {
     return (
       <div className={styles.page}>
         <Breadcrumb deck={deck} />
         <div className={styles.finishedWrap}>
-          <p className={styles.finishedSub}>Dieses Deck hat noch keine Karten.</p>
+          <p className={styles.finishedSub}>
+            {hideMemorized
+              ? 'Alle Karten wurden bereits gelernt.'
+              : 'Dieses Deck hat noch keine Karten.'}
+          </p>
           <div className={styles.finishedActions}>
-            <button className={styles.createCardBtn} onClick={() => setShowCardManager(true)}>
-              + Erste Karte erstellen
-            </button>
+            {hideMemorized ? (
+              <button className={styles.restartBtn} onClick={toggleFilter}>
+                Alle Karten anzeigen
+              </button>
+            ) : (
+              <button className={styles.createCardBtn} onClick={() => setShowCardManager(true)}>
+                + Erste Karte erstellen
+              </button>
+            )}
             <button className={styles.editDeckBtn} onClick={() => setShowEditDeck(true)}>
               ✎ Deck
             </button>
@@ -263,11 +298,19 @@ export default function StudyView() {
         <div className={styles.deckMeta}>
           <h1 className={styles.deckName}>{deck.name}</h1>
           <span className={styles.counter}>
-            Karte {index + 1} / {cards.length}
+            Karte {index + 1} / {activeCards.length}
+            {hideMemorized && <span className={styles.filterBadge}> · gefiltert</span>}
           </span>
         </div>
         <div className={styles.topRight}>
           <ProgressRing progress={progress} size={52} stroke={4} color="#6366f1" />
+          <button
+            className={`${styles.filterBtn} ${hideMemorized ? styles.filterBtnActive : ''}`}
+            onClick={toggleFilter}
+            title={hideMemorized ? 'Alle Karten anzeigen' : 'Gelernte Karten ausblenden'}
+          >
+            {hideMemorized ? '✓ Filter' : '◎ Filter'}
+          </button>
           <button className={styles.createCardBtn} onClick={() => setShowCardManager(true)}>
             + Karte
           </button>
@@ -283,7 +326,7 @@ export default function StudyView() {
       <div className={styles.progressBar}>
         <div
           className={styles.progressFill}
-          style={{ width: `${(index / cards.length) * 100}%` }}
+          style={{ width: `${(index / activeCards.length) * 100}%` }}
         />
       </div>
 
@@ -291,7 +334,10 @@ export default function StudyView() {
         <div className={`${styles.cardScene} ${slideAnim ? styles[slideAnim] : ''}`} onClick={slideAnim ? undefined : handleFlip}>
           <div className={`${styles.cardInner} ${flipped ? styles.flipped : ''} ${noTransition ? styles.noTransition : ''}`}>
           <div className={styles.cardFace}>
-            <span className={styles.sideHint}>Vorderseite</span>
+            <div className={styles.cardFaceHeader}>
+              <span className={styles.sideHint}>Vorderseite</span>
+              <MemorizedDot memorized={card.memorized} />
+            </div>
             <div className={styles.cardContent}>
               <p className={styles.cardText}>{card.front}</p>
               {card.front_image && (
@@ -300,7 +346,10 @@ export default function StudyView() {
             </div>
           </div>
           <div className={`${styles.cardFace} ${styles.cardBack}`}>
-            <span className={styles.sideHint}>Rückseite</span>
+            <div className={styles.cardFaceHeader}>
+              <span className={styles.sideHint}>Rückseite</span>
+              <MemorizedDot memorized={card.memorized} />
+            </div>
             <div className={styles.cardContent}>
               <p className={styles.cardText}>{card.back}</p>
               {card.back_image && (
@@ -358,6 +407,16 @@ export default function StudyView() {
         />
       )}
     </div>
+  )
+}
+
+function MemorizedDot({ memorized }) {
+  if (memorized === null || memorized === undefined) return null
+  return (
+    <span
+      className={`${styles.memorizedDot} ${memorized ? styles.memorizedDotCorrect : styles.memorizedDotWrong}`}
+      title={memorized ? 'Zuletzt richtig beantwortet' : 'Zuletzt falsch beantwortet'}
+    />
   )
 }
 
