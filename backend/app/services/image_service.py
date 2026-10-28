@@ -2,7 +2,7 @@ import uuid
 import os
 from fastapi import UploadFile, HTTPException
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "Upload")
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "..", "..", "..", "Upload"))
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"}
 
 

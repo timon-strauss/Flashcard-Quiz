@@ -10,7 +10,7 @@ from ..database.schemas import (
     TopicCreate as DbTopicCreate,
 )
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "Upload")
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "..", "..", "..", "Upload"))
 
 
 def _image_to_base64(filename: str) -> str | None:

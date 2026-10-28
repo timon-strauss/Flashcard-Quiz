@@ -8,8 +8,9 @@ A browser-based flashcard app — FastAPI backend, React frontend, SQLite storag
 flashcards/
 ├── backend/        # FastAPI app (uvicorn)
 ├── frontend/       # React app (Vite)
+├── mcp-server/     # Read-only MCP server (talks to backend API only)
 ├── data/           # SQLite database file (created at runtime)
-└── docker-compose.yml
+└── Dockerfile      # Single image: frontend + backend + MCP behind nginx
 ```
 
 ## Development (local)
@@ -47,9 +48,41 @@ Runs on **http://localhost:5173**. API calls are automatically proxied to the ba
 
 > **Hinweis:** Das Frontend erwartet, dass das Backend unter `http://localhost:8000` läuft. Starte das Backend zuerst, bevor du das Frontend öffnest.
 
+### MCP-Server
+
+Read-only MCP-Server, der ausschließlich über die HTTP-API mit dem Backend spricht (keine DB- oder Dateizugriffe, nur GET-Requests).
+
+```bash
+cd mcp-server
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python server.py
+```
+
+Läuft auf **http://localhost:8001/mcp** (Streamable HTTP) und erwartet das Backend unter `http://localhost:8000`.
+
+Konfiguration per Umgebungsvariablen:
+
+| Variable | Default | Beschreibung |
+|----------|---------|--------------|
+| `BACKEND_URL` | `http://localhost:8000` | URL des Backends |
+| `MCP_HOST` | `127.0.0.1` | Bind-Adresse |
+| `MCP_PORT` | `8001` | Port |
+| `MCP_TRANSPORT` | `streamable-http` | `streamable-http`, `sse` oder `stdio` |
+
+Tools: `list_topics`, `get_topic`, `list_topic_decks`, `list_decks`, `get_deck`, `list_deck_cards`, `get_card`, `get_card_image`, `get_all_content`.
+
+In Claude Code einbinden:
+
+```bash
+claude mcp add --transport http flashcards http://localhost:8001/mcp        # lokal
+claude mcp add --transport http flashcards http://localhost:3000/mcp        # Podman-Container
+```
+
 ### Alles zusammen starten (lokal)
 
-Öffne zwei Terminals und führe folgendes aus:
+Öffne drei Terminals und führe folgendes aus:
 
 **Terminal 1 — Backend:**
 ```bash
@@ -62,6 +95,12 @@ cd backend && uvicorn app.main:app --reload
 cd frontend
 npm install        # nur beim ersten Mal nötig
 npm run dev
+```
+
+**Terminal 3 — MCP-Server (optional):**
+```bash
+source mcp-server/.venv/bin/activate
+cd mcp-server && python server.py
 ```
 
 Dann im Browser öffnen: **http://localhost:5173**
@@ -82,6 +121,14 @@ podman run -d \
 ```
 
 App runs at **http://localhost:3000**. Other devices on the same network can reach it at `http://<your-ip>:3000`.
+
+Everything runs in one container behind nginx on port 80 (mapped to 3000):
+
+| Path | Routed to |
+|------|-----------|
+| `/` | Frontend (static build) |
+| `/api/`, `/uploads/` | Backend (`127.0.0.1:8000`) |
+| `/mcp` | MCP server (`127.0.0.1:8001`) |
 
 Data is stored in Podman-managed named volumes (`flashcards-data`, `flashcards-uploads`) — not in your project folder. It persists across container restarts and rebuilds.
 

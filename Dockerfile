@@ -20,6 +20,13 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app/ ./app/
 
+# Install MCP server
+WORKDIR /app/mcp-server
+COPY mcp-server/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY mcp-server/server.py .
+WORKDIR /app/backend
+
 # Copy built frontend
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
@@ -42,12 +49,23 @@ RUN printf 'server {\n\
         proxy_set_header Host $host;\n\
         proxy_set_header X-Real-IP $remote_addr;\n\
     }\n\
+    location /mcp {\n\
+        proxy_pass http://127.0.0.1:8001;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Connection \"\";\n\
+        proxy_buffering off;\n\
+        proxy_cache off;\n\
+        proxy_read_timeout 1h;\n\
+    }\n\
 }\n' > /etc/nginx/sites-enabled/default
 
-# Startup script
-RUN printf '#!/bin/sh\nnginx\nuvicorn app.main:app --host 127.0.0.1 --port 8000\n' > /start.sh && chmod +x /start.sh
+# Startup script: nginx + MCP server in background, backend in foreground
+RUN printf '#!/bin/sh\nnginx\nBACKEND_URL=http://127.0.0.1:8000 MCP_HOST=127.0.0.1 MCP_PORT=8001 python /app/mcp-server/server.py &\nuvicorn app.main:app --host 127.0.0.1 --port 8000\n' > /start.sh && chmod +x /start.sh
 
-VOLUME ["/app/data"]
+ENV DATA_DIR=/app/data \
+    UPLOAD_DIR=/app/uploads
+
+VOLUME ["/app/data", "/app/uploads"]
 
 EXPOSE 80
 
