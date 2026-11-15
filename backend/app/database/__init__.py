@@ -1,8 +1,16 @@
 from abc import ABC, abstractmethod
-from .schemas import TopicResponse, TopicUpdate, TopicCreate, DeckResponse, DeckUpdate, DeckCreate, CardResponse, CardUpdate, CardCreate
+from datetime import datetime
+
+from .schemas import (
+    TopicResponse, TopicUpdate, TopicCreate,
+    DeckResponse, DeckUpdate, DeckCreate,
+    CardResponse, CardUpdate, CardCreate,
+    CardReview, ReviewLogResponse, CardStats,
+)
 
 
 class DatabaseAPI(ABC):
+    """Storage interface. All datetimes going in and out are timezone-aware (UTC)."""
 
     @classmethod
     @abstractmethod
@@ -10,6 +18,7 @@ class DatabaseAPI(ABC):
         ...
 
     # --- topic ---
+
     @abstractmethod
     def list_topics(self) -> list[TopicResponse]:
         ...
@@ -19,11 +28,11 @@ class DatabaseAPI(ABC):
         ...
 
     @abstractmethod
-    def create_topics(self, create_topic: TopicCreate) -> TopicResponse:
+    def create_topic(self, create_topic: TopicCreate) -> TopicResponse:
         ...
 
     @abstractmethod
-    def update_topics(self, update_topic: TopicUpdate) -> TopicResponse | None:
+    def update_topic(self, update_topic: TopicUpdate) -> TopicResponse | None:
         ...
 
     @abstractmethod
@@ -31,16 +40,17 @@ class DatabaseAPI(ABC):
         """Returns True if deleted, False if not found."""
         ...
 
-
     # --- Decks ---
 
     @abstractmethod
-    def list_decks(self) -> list[DeckResponse]:
-        ...
+    def list_decks(
+        self, topic_id: int | None = None, without_topic: bool = False
+    ) -> list[DeckResponse] | None:
+        """All decks by default, the decks of a topic with topic_id,
+        or only the decks that belong to no topic with without_topic.
 
-    @abstractmethod
-    def list_decks_by_topic(self, topic_id) -> list[DeckResponse] | None:
-        """None if topic doesnt exist"""
+        None if topic doesnt exist
+        """
         ...
 
     @abstractmethod
@@ -64,16 +74,8 @@ class DatabaseAPI(ABC):
     # --- Cards ---
 
     @abstractmethod
-    def list_cards(self) -> list[CardResponse]:
-        ...
-    @abstractmethod
-    def list_cards_by_deck(self, deck_id: id) -> list[CardResponse] | None:
-        """None if deck doesnt exist"""
-        ...
-
-    @abstractmethod
-    def list_cards_by_topic(self, topic_id: id) -> list[CardResponse] | None:
-        """None if topic doesnt exist"""
+    def list_cards(self, deck_id: int | None = None) -> list[CardResponse] | None:
+        """All cards when deck_id is None, ordered by position. None if deck doesnt exist"""
         ...
 
     @abstractmethod
@@ -81,12 +83,13 @@ class DatabaseAPI(ABC):
         ...
 
     @abstractmethod
-    def create_card( self, create_card: CardCreate) -> CardResponse | None:
-        """None if deck doesnt exist"""
+    def create_card(self, create_card: CardCreate) -> CardResponse | None:
+        """New cards are in Learning and due immediately. None if deck doesnt exist"""
         ...
 
     @abstractmethod
-    def update_card( self, create_update: CardUpdate) -> CardResponse | None:
+    def update_card(self, update_card: CardUpdate) -> CardResponse | None:
+        """Changes content only, never the scheduling state."""
         ...
 
     @abstractmethod
@@ -94,8 +97,57 @@ class DatabaseAPI(ABC):
         """Returns True if deleted, False if not found."""
         ...
 
+    @abstractmethod
+    def reorder_cards(self, deck_id: int, card_ids: list[int]) -> list[CardResponse] | None:
+        """Sets the positions to the order of card_ids. None if deck doesnt exist"""
+        ...
 
-from .sqlliteAPI import SQLiteAPI
+    # --- Reviews / FSRS ---
 
-db: type[DatabaseAPI] = SQLiteAPI
+    @abstractmethod
+    def review_card(self, review: CardReview) -> CardResponse | None:
+        """Stores the new scheduling state and the review log in one transaction.
 
+        None if card doesnt exist
+        """
+        ...
+
+    @abstractmethod
+    def list_due_cards(
+        self,
+        due_before: datetime,
+        deck_id: int | None = None,
+        topic_id: int | None = None,
+        limit: int | None = None,
+    ) -> list[CardResponse] | None:
+        """Cards with due <= due_before, most overdue first. None if deck / topic doesnt exist"""
+        ...
+
+    @abstractmethod
+    def list_review_logs(
+        self,
+        card_id: int | None = None,
+        deck_id: int | None = None,
+        topic_id: int | None = None,
+        since: datetime | None = None,
+    ) -> list[ReviewLogResponse] | None:
+        """Oldest first. None if card / deck / topic doesnt exist"""
+        ...
+
+    @abstractmethod
+    def get_card_stats(
+        self,
+        due_before: datetime,
+        deck_id: int | None = None,
+        topic_id: int | None = None,
+    ) -> CardStats | None:
+        """Card counts per state, and how many are due (due <= due_before).
+
+        Over all cards by default. None if deck / topic doesnt exist
+        """
+        ...
+
+
+from .SQLlite import SQLite
+
+db: type[DatabaseAPI] = SQLite

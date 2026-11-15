@@ -13,7 +13,7 @@ class TopicResponse(TopicBase):
     id: int
 
 class TopicCreate(TopicBase):
-    pass
+    ...
 
 class TopicUpdate(TopicBase):
     id: int
@@ -32,7 +32,7 @@ class DeckResponse(DeckBase):
     id: int
 
 class DeckCreate(DeckBase):
-    pass
+    ...
 
 class DeckUpdate(DeckBase):
     id: int
@@ -52,17 +52,57 @@ class CardBase(BaseModel):
 class CardResponse(CardBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    memorized: bool = False
-    last_seen_at: datetime | None = None
     position: int = 0
 
+    # FSRS scheduling state (read-only here, only changed through CardReview)
+    # state: 1 = Learning, 2 = Review, 3 = Relearning (new card = Learning without last_review)
+    state: int
+    step: int | None = None
+    stability: float | None = None
+    difficulty: float | None = None
+    due: datetime
+    last_review: datetime | None = None
+
 class CardCreate(CardBase):
-    pass
+    ...
 
 class CardUpdate(CardBase):
+    """Content only. The scheduling state is changed through CardReview."""
     id: int
     front: str | None = None
     back: str | None = None
-    memorized: bool | None = None
-    last_seen_at: datetime | None = None
     deck_id: int | None = None
+
+
+# --- Review / FSRS ---
+
+class CardReview(BaseModel):
+    """One answered card: the rating plus the card state the scheduler computed from it."""
+    card_id: int
+
+    # rating: 1 = Again, 2 = Hard, 3 = Good, 4 = Easy
+    rating: int
+    reviewed_at: datetime
+
+    # new card state after the review
+    state: int
+    step: int | None = None
+    stability: float
+    difficulty: float
+    due: datetime
+
+class ReviewLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    card_id: int
+    rating: int
+    reviewed_at: datetime
+
+class CardStats(BaseModel):
+    total: int = 0
+    due: int = 0
+    # never reviewed
+    new: int = 0
+    learning: int = 0
+    review: int = 0
+    relearning: int = 0
