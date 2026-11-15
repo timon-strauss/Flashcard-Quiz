@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from .schemas import DeckCreate, DeckUpdate, DeckLean, DeckResponse, CardResponse, CardOrderUpdate
 from ..services import deck_service, review_service
 
@@ -23,7 +23,7 @@ def get_deck(deck_id: int):
     return deck
 
 
-@router.post("", response_model=DeckResponse)
+@router.post("", response_model=DeckResponse, status_code=201)
 def create_deck(body: DeckCreate):
     deck = deck_service.create_deck(body)
     if deck is None:
@@ -39,7 +39,7 @@ def update_deck(deck_id: int, body: DeckUpdate):
     return deck
 
 
-@router.delete("/{deck_id}")
+@router.delete("/{deck_id}", status_code=204)
 def delete_deck(deck_id: int):
     if not deck_service.delete_deck(deck_id):
         raise HTTPException(status_code=404, detail="Deck not found")
@@ -62,7 +62,8 @@ def reorder_deck_cards(deck_id: int, body: CardOrderUpdate):
 
 
 @router.get("/{deck_id}/due-cards", response_model=list[CardResponse])
-def list_due_deck_cards(deck_id: int, limit: int | None = None):
+def list_due_deck_cards(deck_id: int, limit: int | None = Query(None, ge=1)):
+    """The deck's cards to study now, most overdue first."""
     cards = review_service.list_due_cards(deck_id=deck_id, limit=limit)
     if cards is None:
         raise HTTPException(status_code=404, detail="Deck not found")
