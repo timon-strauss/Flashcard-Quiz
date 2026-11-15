@@ -65,6 +65,7 @@ export default function TopicPage() {
       <StatsPanel
         stats={stats}
         topicId={id}
+        examDate={topic.exam_date}
         extraTile={
           stats.days_until_exam !== null && (
             <div className="tile">

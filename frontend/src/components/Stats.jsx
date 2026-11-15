@@ -132,28 +132,39 @@ const dayFormat = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'num
 const axisFormat = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short' })
 const localDate = (iso) => new Date(`${iso}T00:00`)
 
+const DAY_MS = 24 * 60 * 60 * 1000
+const todayIso = () => {
+  const now = new Date()
+  return new Date(now - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+}
+
 /**
- * Line graph of the known cards (last rated Good or Easy) per day, on a scale from zero
- * to all cards. The SVG is stretched to the plot (0–100 in both directions), so points
- * are plain percentages; the hover marker and tooltip are HTML positioned with the same
- * percentages.
+ * Line of the ready ("gefestigt") cards per day. The x axis runs from the first day to the
+ * exam (to today without an upcoming exam), so the empty stretch on the right is the time
+ * that is left; the y axis runs from zero to all cards. The SVG is stretched to the plot
+ * (0–100 in both directions), so points are plain percentages; the markers and the tooltip
+ * are HTML positioned with the same percentages.
  */
-function ProgressChart({ progress, totalCards }) {
+function ProgressChart({ progress, totalCards, examDate }) {
   const [active, setActive] = useState(null)
   const n = progress.length
-  // cards deleted since can leave an earlier day above today's total
-  const max = Math.max(totalCards, ...progress.map((d) => d.known), 1)
-  const x = (i) => (n > 1 ? (i / (n - 1)) * 100 : 50)
+  const first = progress[0].date
+  const today = progress[n - 1]
+  const hasExam = Boolean(examDate) && examDate > todayIso()
+  const end = hasExam ? examDate : today.date
+  const span = Math.max(Math.round((localDate(end) - localDate(first)) / DAY_MS), 1)
+  const max = Math.max(totalCards, ...progress.map((d) => d.ready), 1)
+  const x = (i) => (i / span) * 100 // progress has one entry per day, so the index is the day
   const y = (value) => 100 - (value / max) * 100
-  const line = progress.map((d, i) => `${i ? 'L' : 'M'}${x(i)} ${y(d.known)}`).join(' ')
+  const line = progress.map((d, i) => `${i ? 'L' : 'M'}${x(i)} ${y(d.ready)}`).join(' ')
+  const todayX = x(n - 1)
   const day = active !== null ? progress[active] : null
-  const edge = active !== null && (active < n * 0.2 ? 'start' : active > n * 0.8 ? 'end' : 'mid')
-  const latest = progress[n - 1].known
+  const edge = active !== null && (x(active) < 20 ? 'start' : x(active) > 80 ? 'end' : 'mid')
 
   const pick = (e) => {
     const box = e.currentTarget.getBoundingClientRect()
     const ratio = (e.clientX - box.left) / box.width
-    setActive(Math.min(n - 1, Math.max(0, Math.round(ratio * (n - 1)))))
+    setActive(Math.min(n - 1, Math.max(0, Math.round(ratio * span))))
   }
   const onKey = (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
@@ -164,11 +175,14 @@ function ProgressChart({ progress, totalCards }) {
 
   return (
     <div className="rchart">
+      <p className="rchart-head">
+        <b>{today.ready}</b> von {cardCount(totalCards)} gefestigt
+      </p>
       <div
         className="rchart-plot pchart-plot"
         tabIndex={0}
         role="img"
-        aria-label={`Gekonnte Karten pro Tag über ${n} Tage, heute ${latest} von ${totalCards}`}
+        aria-label={`Gefestigte Karten pro Tag seit ${axisFormat.format(localDate(first))}, heute ${today.ready} von ${totalCards}`}
         onPointerMove={pick}
         onPointerDown={pick}
         onPointerLeave={() => setActive(null)}
@@ -177,25 +191,30 @@ function ProgressChart({ progress, totalCards }) {
       >
         <span className="pchart-max">{cardCount(max)}</span>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <path className="rchart-area" d={`${line} L${x(n - 1)} 100 L${x(0)} 100 Z`} />
+          <defs>
+            <linearGradient id="pchart-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" style={{ stopColor: 'var(--accent)', stopOpacity: 0.34 }} />
+              <stop offset="1" style={{ stopColor: 'var(--accent)', stopOpacity: 0.03 }} />
+            </linearGradient>
+          </defs>
+          <path className="rchart-area" d={`${line} L${todayX} 100 L0 100 Z`} />
           <path className="rchart-line" d={line} vectorEffect="non-scaling-stroke" />
         </svg>
+        {hasExam && <i className="pchart-today" style={{ left: `${todayX}%` }} />}
+        <i className="rchart-dot" style={{ left: `${x(active ?? n - 1)}%`, top: `${y((day ?? today).ready)}%` }} />
         {day && (
-          <>
-            <i className="rchart-cross" style={{ left: `${x(active)}%` }} />
-            <i className="rchart-dot" style={{ left: `${x(active)}%`, top: `${y(day.known)}%` }} />
-            <div className={`tip tip-${edge}`} style={{ left: `${x(active)}%` }}>
-              <span className="tip-title">{dayFormat.format(localDate(day.date))}</span>
-              <span className="tip-row"><b>{day.known}</b> von {cardCount(max)} gekonnt</span>
-              <span className="tip-row muted">zuletzt mit Gut oder Einfach bewertet</span>
-            </div>
-          </>
+          <div className={`tip tip-${edge}`} style={{ left: `${x(active)}%` }}>
+            <span className="tip-title">{active === n - 1 ? 'Heute' : dayFormat.format(localDate(day.date))}</span>
+            <span className="tip-row"><b>{day.ready}</b> von {cardCount(max)} gefestigt</span>
+          </div>
         )}
       </div>
-      <div className="rchart-axis">
-        <span>{axisFormat.format(localDate(progress[0].date))}</span>
-        <span>{axisFormat.format(localDate(progress[Math.floor(n / 2)].date))}</span>
-        <span>Heute</span>
+      <div className="rchart-axis pchart-axis">
+        <span>{axisFormat.format(localDate(first))}</span>
+        {hasExam && todayX > 18 && todayX < 78 && (
+          <span className="pchart-axis-today" style={{ left: `${todayX}%` }}>Heute</span>
+        )}
+        <span>{hasExam ? `Klausur · ${axisFormat.format(localDate(examDate))}` : 'Heute'}</span>
       </div>
     </div>
   )
@@ -262,7 +281,7 @@ function ForecastChart({ forecast }) {
 
 // ── Panel ────────────────────────────────────────────────────────────────────
 
-const HISTORY_DAYS = 30
+const HISTORY_DAYS = 365 // at most; the chart starts at the first review
 const FORECAST_DAYS = 14
 
 function ForecastFigure({ deckId, topicId, stats }) {
@@ -284,14 +303,18 @@ function ForecastFigure({ deckId, topicId, stats }) {
   )
 }
 
-function ProgressFigure({ deckId, topicId, stats }) {
-  const progress = useLoad(() => api.progressHistory({ deckId, topicId, days: HISTORY_DAYS }), [deckId, topicId])
+function ProgressFigure({ deckId, topicId, stats, examDate }) {
+  // reloads whenever cards were added, removed or reviewed
+  const progress = useLoad(
+    () => api.progressHistory({ deckId, topicId, days: HISTORY_DAYS }),
+    [deckId, topicId, stats.total_cards, stats.ready_cards],
+  )
 
   return (
     <figure className="chart">
-      <figcaption>Fortschritt der letzten {HISTORY_DAYS} Tage</figcaption>
+      <figcaption>Fortschritt bis zur Klausur</figcaption>
       {progress.data ? (
-        <ProgressChart progress={progress.data} totalCards={stats.total_cards} />
+        <ProgressChart progress={progress.data} totalCards={stats.total_cards} examDate={examDate} />
       ) : (
         <p className="muted small">{progress.error ? 'Fortschritt konnte nicht geladen werden.' : 'Lädt …'}</p>
       )}
@@ -300,8 +323,8 @@ function ProgressFigure({ deckId, topicId, stats }) {
 }
 
 /** Statistics for one topic or one deck: headline numbers, the preparation pie and either the
- * known cards over time (`chart="progress"`) or the upcoming due cards (`chart="forecast"`). */
-export function StatsPanel({ stats, deckId, topicId, chart = 'progress', extraTile, children }) {
+ * ready cards over time up to the exam (`chart="progress"`) or the upcoming due cards (`chart="forecast"`). */
+export function StatsPanel({ stats, deckId, topicId, examDate, chart = 'progress', extraTile, children }) {
   return (
     <section className="panel">
       <div className="tiles">
@@ -324,7 +347,7 @@ export function StatsPanel({ stats, deckId, topicId, chart = 'progress', extraTi
         {chart === 'forecast' ? (
           <ForecastFigure deckId={deckId} topicId={topicId} stats={stats} />
         ) : (
-          <ProgressFigure deckId={deckId} topicId={topicId} stats={stats} />
+          <ProgressFigure deckId={deckId} topicId={topicId} stats={stats} examDate={examDate} />
         )}
       </div>
 

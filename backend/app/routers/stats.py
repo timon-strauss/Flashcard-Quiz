@@ -44,7 +44,7 @@ def progress_history(
     topic_id: int | None = None,
     tz_offset: int = Query(0, ge=-840, le=840, description="Minutes east of UTC"),
 ):
-    """Cards whose latest rating was Good or Easy, at the end of each of the last `days` days."""
+    """Ready cards at the end of each day, from the first review on (at most `days` days)."""
     progress = stats_service.progress_history(
         days, deck_id=deck_id, topic_id=topic_id, tz_offset_minutes=tz_offset
     )

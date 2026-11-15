@@ -137,7 +137,7 @@ class ReviewDay(BaseModel):
 
 class ProgressDay(BaseModel):
     date: date
-    known: int
+    ready: int  # at the end of that day: not due again before the exam; without exam: interval of 3+ weeks
 
 
 class DueDay(BaseModel):

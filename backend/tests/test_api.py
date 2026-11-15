@@ -429,63 +429,84 @@ class TestDueForecast:
 
 
 class TestProgressHistory:
-    def _known(self, client, **params):
-        return [d["known"] for d in client.get("/stats/progress", params={"days": 2, **params}).json()]
+    def _today(self, client, **params):
+        return client.get("/stats/progress", params=params).json()[-1]["ready"]
 
-    def test_empty_without_reviews(self, client):
+    def test_just_today_without_reviews(self, client):
         _card(client, _deck(client))
         days = client.get("/stats/progress", params={"days": 7}).json()
-        assert len(days) == 7
-        assert all(d["known"] == 0 for d in days)
-        assert days[-1]["date"] == datetime.now(timezone.utc).date().isoformat()
+        assert days == [{"date": datetime.now(timezone.utc).date().isoformat(), "ready": 0}]
 
-    def test_counts_cards_last_rated_good_or_easy(self, client):
+    def test_today_matches_the_card_stats(self, client):
+        topic = _topic(client, exam_date=(datetime.now(timezone.utc) + timedelta(days=3)).date().isoformat())
+        deck = _deck(client, topic_id=topic["id"])
+        _review(client, _card(client, deck), EASY)  # due in about 8 days: after the exam
+        _review(client, _card(client, deck), GOOD)  # back in ten minutes
+        _card(client, deck)
+        stats = client.get(f"/topics/{topic['id']}").json()["stats"]
+        assert self._today(client, topic_id=topic["id"]) == 1
+        assert stats["ready_cards"] == 1
+
+    def test_without_exam_a_first_easy_is_not_ready_yet(self, client):
         deck = _deck(client)
-        good, easy, hard, again = (_card(client, deck) for _ in range(4))
-        _review(client, good, GOOD)
-        _review(client, easy, EASY)
-        _review(client, hard, HARD)
-        _review(client, again, AGAIN)
-        assert self._known(client) == [0, 2]
+        _review(client, _card(client, deck), EASY)
+        assert self._today(client, deck_id=deck["id"]) == 0
 
-    def test_latest_rating_decides(self, client):
-        deck = _deck(client)
-        card = _card(client, deck)
-        _review(client, card, GOOD)
-        _review(client, card, AGAIN)
-        assert self._known(client) == [0, 0]
-        _review(client, card, GOOD)
-        _review(client, card, GOOD)
-        assert self._known(client) == [0, 1]
-
-    def test_earlier_days_keep_their_count(self):
+    def test_past_days_are_recomputed_from_the_logs(self):
         from unittest.mock import MagicMock, patch
         from app.services import stats_service
 
-        def log(card_id, rating, day, hour=12):
-            return MagicMock(card_id=card_id, rating=rating,
-                             reviewed_at=datetime(2030, 1, day, hour, tzinfo=timezone.utc))
+        def at(day, hour=12):
+            return datetime(2030, 1, day, hour, tzinfo=timezone.utc)
+
+        def card(card_id, reviewed=None, due=None):
+            return MagicMock(id=card_id, deck_id=1, last_review=reviewed, due=due, stability=8.3)
+
+        def log(card_id, rating, day):
+            return MagicMock(card_id=card_id, rating=rating, reviewed_at=at(day))
 
         api = MagicMock()
         api.__enter__.return_value = api
-        # card 1 known since before the window, card 2 wrong on the 2nd and right on the 3rd
-        api.list_review_logs.return_value = [
-            log(1, GOOD, 1), log(2, GOOD, 1), log(2, AGAIN, 2), log(2, GOOD, 3), log(1, HARD, 4),
-        ]
+        # exam on the 8th: a card is ready once it is not due again before the 9th
+        api.list_topics.return_value = [MagicMock(id=1, exam_date=datetime(2030, 1, 8).date())]
+        api.list_decks.return_value = [MagicMock(id=1, topic_id=1)]
+        # card 1: Easy on the 1st (back on the 9th), then forgotten on the 3rd.
+        # card 2: Easy on the 3rd (back on the 11th). card 3: never reviewed.
+        api.list_cards.return_value = [card(1, at(3), at(3, 13)), card(2, at(3), at(11)), card(3)]
+        api.list_review_logs.return_value = [log(1, EASY, 1), log(1, AGAIN, 3), log(2, EASY, 3)]
         with patch.object(stats_service, "db", return_value=api):
-            days = stats_service.progress_history(3, now=datetime(2030, 1, 4, 18, tzinfo=timezone.utc))
-        assert [(d.date.day, d.known) for d in days] == [(2, 1), (3, 2), (4, 1)]
+            days = stats_service.progress_history(3, now=at(4, 18))
+        assert [(d.date.day, d.ready) for d in days] == [(2, 1), (3, 1), (4, 1)]
+
+    def test_starts_at_the_first_review(self):
+        from unittest.mock import MagicMock, patch
+        from app.services import stats_service
+
+        reviewed = datetime(2030, 1, 3, 12, tzinfo=timezone.utc)
+        api = MagicMock()
+        api.__enter__.return_value = api
+        api.list_topics.return_value = []
+        api.list_decks.return_value = []
+        api.list_cards.return_value = [
+            MagicMock(id=1, deck_id=1, last_review=reviewed, due=reviewed + timedelta(days=8), stability=8.3)
+        ]
+        api.list_review_logs.return_value = [MagicMock(card_id=1, rating=EASY, reviewed_at=reviewed)]
+        with patch.object(stats_service, "db", return_value=api):
+            days = stats_service.progress_history(30, now=datetime(2030, 1, 5, 9, tzinfo=timezone.utc))
+        assert [d.date.day for d in days] == [3, 4, 5]
 
     def test_scoped_to_deck_and_topic(self, client):
         topic = _topic(client)
         inside = _deck(client, "In", topic_id=topic["id"])
         outside = _deck(client, "Out")
-        _review(client, _card(client, inside), GOOD)
-        _review(client, _card(client, outside), EASY)
-        _review(client, _card(client, outside), EASY)
-        assert self._known(client)[-1] == 3
-        assert self._known(client, topic_id=topic["id"])[-1] == 1
-        assert self._known(client, deck_id=outside["id"])[-1] == 2
+        exam = (datetime.now(timezone.utc) + timedelta(days=3)).date().isoformat()
+        topic = _topic(client, "Other", exam_date=exam)
+        inside = _deck(client, "In2", topic_id=topic["id"])
+        _review(client, _card(client, inside), EASY)   # ready: back after the exam
+        _review(client, _card(client, outside), EASY)  # no exam: one Easy is not ready
+        assert self._today(client) == 1
+        assert self._today(client, topic_id=topic["id"]) == 1
+        assert self._today(client, deck_id=outside["id"]) == 0
 
     def test_unknown_scope_is_404(self, client):
         assert client.get("/stats/progress", params={"deck_id": 999}).status_code == 404

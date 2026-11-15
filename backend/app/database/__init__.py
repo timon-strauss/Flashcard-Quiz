@@ -74,8 +74,13 @@ class DatabaseAPI(ABC):
     # --- Cards ---
 
     @abstractmethod
-    def list_cards(self, deck_id: int | None = None) -> list[CardResponse] | None:
-        """All cards when deck_id is None, ordered by position. None if deck doesnt exist"""
+    def list_cards(
+        self, deck_id: int | None = None, topic_id: int | None = None
+    ) -> list[CardResponse] | None:
+        """All cards by default, or those of one deck / topic, ordered by position.
+
+        None if deck / topic doesnt exist
+        """
         ...
 
     @abstractmethod

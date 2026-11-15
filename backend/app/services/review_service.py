@@ -9,6 +9,31 @@ from ..routers.schemas import CardResponse
 # FSRS with its default parameters, 90 % desired retention
 scheduler = Scheduler()
 
+# Same scheduler without the random spread of longer intervals, to recompute past schedules
+_replay_scheduler = Scheduler(
+    parameters=scheduler.parameters,
+    desired_retention=scheduler.desired_retention,
+    learning_steps=scheduler.learning_steps,
+    relearning_steps=scheduler.relearning_steps,
+    maximum_interval=scheduler.maximum_interval,
+    enable_fuzzing=False,
+)
+
+
+def replay_schedule(reviews: list[tuple[int, datetime]]) -> list[tuple[datetime, datetime, float]]:
+    """Recomputes how a card was scheduled after each of its reviews.
+
+    `reviews` are (rating, reviewed_at) pairs, oldest first. Returns one
+    (reviewed_at, due, stability) per review. Longer intervals were originally spread by a
+    few percent at random, so a recomputed due date can differ slightly from the real one.
+    """
+    card = Card()
+    schedule = []
+    for rating, reviewed_at in reviews:
+        card, _ = _replay_scheduler.review_card(card, Rating(rating), reviewed_at)
+        schedule.append((reviewed_at, card.due, card.stability))
+    return schedule
+
 
 def _to_fsrs_card(card: DbCardResponse) -> Card:
     return Card(

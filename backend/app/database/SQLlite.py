@@ -7,16 +7,13 @@ from .schemas import (
     TopicResponse, TopicCreate, TopicUpdate,
     DeckResponse, DeckCreate, DeckUpdate,
     CardResponse, CardCreate, CardUpdate,
-    CardReview, ReviewLogResponse, CardStats,
+    CardReview, ReviewLogResponse, CardStats, READY_STABILITY_DAYS,
 )
 from .models import Topic, Deck, Card, ReviewLog
 from .database import SessionLocal, start_db
 
 # FSRS card states
 LEARNING, REVIEW, RELEARNING = 1, 2, 3
-# Without an upcoming exam a card counts as ready ("gefestigt") once its FSRS stability,
-# roughly the interval until the next review, reaches three weeks.
-READY_STABILITY_DAYS = 21
 
 
 # SQLite stores datetimes without timezone, so every stored datetime is UTC by convention.
@@ -156,8 +153,10 @@ class SQLite(DatabaseAPI):
 
     # --- Cards ---
 
-    def list_cards(self, deck_id: int | None = None) -> list[CardResponse] | None:
-        query = self._in_scope(self.db.query(Card), deck_id, None)
+    def list_cards(
+        self, deck_id: int | None = None, topic_id: int | None = None
+    ) -> list[CardResponse] | None:
+        query = self._in_scope(self.db.query(Card), deck_id, topic_id)
         if query is None:
             return None
         rows = query.order_by(Card.deck_id, Card.position, Card.id).all()

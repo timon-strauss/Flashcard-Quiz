@@ -98,6 +98,11 @@ class ReviewLogResponse(BaseModel):
     rating: int
     reviewed_at: datetime
 
+# Without an upcoming exam a card counts as ready ("gefestigt") once its FSRS stability,
+# roughly the interval until the next review, reaches three weeks.
+READY_STABILITY_DAYS = 21
+
+
 class CardStats(BaseModel):
     total: int = 0
     due: int = 0
