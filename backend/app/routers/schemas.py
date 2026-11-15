@@ -123,3 +123,14 @@ class CardResponse(BaseModel):
 
 class CardOrderUpdate(BaseModel):
     order: list[int]  # list of card IDs in desired order
+
+
+# ── Stats ─────────────────────────────────────────────────────────────────────
+
+class ReviewDay(BaseModel):
+    date: date
+    total: int
+    again: int
+    hard: int
+    good: int
+    easy: int

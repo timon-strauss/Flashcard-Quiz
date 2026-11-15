@@ -338,3 +338,40 @@ class TestTransfer:
     def test_export_missing_is_404(self, client):
         assert client.get("/export/deck/999").status_code == 404
         assert client.get("/export/topic/999").status_code == 404
+
+
+class TestReviewHistory:
+    def test_fills_days_without_reviews(self, client):
+        days = client.get("/stats/reviews", params={"days": 7}).json()
+        assert len(days) == 7
+        assert all(d["total"] == 0 for d in days)
+        assert days == sorted(days, key=lambda d: d["date"])
+
+    def test_counts_todays_reviews_by_rating(self, client):
+        deck = _deck(client)
+        card = _card(client, deck)
+        _review(client, card, AGAIN)
+        _review(client, card, GOOD)
+        _review(client, card, GOOD)
+        today = client.get("/stats/reviews", params={"days": 3}).json()[-1]
+        assert today["date"] == datetime.now(timezone.utc).date().isoformat()
+        assert (today["total"], today["again"], today["hard"], today["good"], today["easy"]) == (3, 1, 0, 2, 0)
+
+    def test_scoped_to_deck_and_topic(self, client):
+        topic = _topic(client)
+        inside = _deck(client, "In", topic_id=topic["id"])
+        outside = _deck(client, "Out")
+        _review(client, _card(client, inside), GOOD)
+        _review(client, _card(client, outside), EASY)
+        _review(client, _card(client, outside), EASY)
+
+        def total(**scope):
+            return client.get("/stats/reviews", params={"days": 1, **scope}).json()[0]["total"]
+
+        assert total() == 3
+        assert total(topic_id=topic["id"]) == 1
+        assert total(deck_id=outside["id"]) == 2
+
+    def test_unknown_scope_is_404(self, client):
+        assert client.get("/stats/reviews", params={"deck_id": 999}).status_code == 404
+        assert client.get("/stats/reviews", params={"topic_id": 999}).status_code == 404

@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import db as DatabaseAPI
-from .routers import topics, decks, cards, transfer
+from .routers import topics, decks, cards, transfer, stats
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "..", "..", "Upload"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -35,6 +35,7 @@ app.include_router(topics.router)
 app.include_router(decks.router)
 app.include_router(cards.router)
 app.include_router(transfer.router)
+app.include_router(stats.router)
 
 
 
