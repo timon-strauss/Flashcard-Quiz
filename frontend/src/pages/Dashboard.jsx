@@ -66,7 +66,7 @@ export default function Dashboard() {
           {due > 0 && (
             <Link to="/study/all" className="btn btn-primary btn-large">Jetzt lernen</Link>
           )}
-          <button className="btn" onClick={() => setDialog('topic')}><Icon name="plus" /> Topic</button>
+          <button className="btn" onClick={() => setDialog('topic')}><Icon name="plus" /> Projekt</button>
           <button className="btn" onClick={() => setDialog('deck')}><Icon name="plus" /> Deck</button>
           <button className="btn btn-ghost" onClick={() => setDialog('import')}><Icon name="upload" /> Importieren</button>
         </div>
@@ -76,21 +76,21 @@ export default function Dashboard() {
         <div className="empty">
           <h3>Noch nichts hier</h3>
           <p className="muted">
-            Ein Topic bündelt die Decks für eine Klausur. Decks können aber auch für sich allein stehen.
+            Ein Projekt bündelt die Decks für eine Klausur. Decks können aber auch für sich allein stehen.
           </p>
         </div>
       )}
 
       {upcoming.length > 0 && (
         <section>
-          <h2 className="section-title">Topics</h2>
+          <h2 className="section-title">Projekte</h2>
           <div className="grid">{upcoming.map(topicCard)}</div>
         </section>
       )}
 
       {looseDecks.length > 0 && (
         <section>
-          <h2 className="section-title">Decks ohne Topic</h2>
+          <h2 className="section-title">Decks ohne Projekt</h2>
           <div className="grid">
             {looseDecks.map((d) => (
               <OverviewCard key={d.id} to={`/decks/${d.id}`} title={d.name} description={d.description} stats={d.stats} />

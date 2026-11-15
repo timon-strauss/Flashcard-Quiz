@@ -37,6 +37,13 @@ function form(fields) {
 
 const limitQuery = (limit) => (limit ? `?limit=${limit}` : '')
 
+function statsQuery({ deckId, topicId, days } = {}, defaultDays) {
+  const query = new URLSearchParams({ days: days ?? defaultDays, tz_offset: -new Date().getTimezoneOffset() })
+  if (deckId) query.set('deck_id', deckId)
+  if (topicId) query.set('topic_id', topicId)
+  return query
+}
+
 export const api = {
   // Topics
   topics: () => request('/topics'),
@@ -65,13 +72,9 @@ export const api = {
   deleteCard: (id) => request(`/cards/${id}`, { method: 'DELETE' }),
   reviewCard: (id, rating) => request(`/cards/${id}/review`, json('POST', { rating })),
 
-  // Stats — reviews per day, bucketed in the browser's timezone
-  reviewHistory: ({ deckId, topicId, days = 30 } = {}) => {
-    const query = new URLSearchParams({ days, tz_offset: -new Date().getTimezoneOffset() })
-    if (deckId) query.set('deck_id', deckId)
-    if (topicId) query.set('topic_id', topicId)
-    return request(`/stats/reviews?${query}`)
-  },
+  // Stats — per-day counts, bucketed in the browser's timezone
+  progressHistory: (scope) => request(`/stats/progress?${statsQuery(scope, 30)}`),
+  dueForecast: (scope) => request(`/stats/due?${statsQuery(scope, 14)}`),
 
   // Transfer
   exportDeck: (id) => request(`/export/deck/${id}`),

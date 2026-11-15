@@ -375,3 +375,115 @@ class TestReviewHistory:
     def test_unknown_scope_is_404(self, client):
         assert client.get("/stats/reviews", params={"deck_id": 999}).status_code == 404
         assert client.get("/stats/reviews", params={"topic_id": 999}).status_code == 404
+
+
+class TestDueForecast:
+    def test_fills_days_without_due_cards(self, client):
+        days = client.get("/stats/due", params={"days": 7}).json()
+        assert len(days) == 7
+        assert all(d["count"] == 0 for d in days)
+        assert days[0]["date"] == datetime.now(timezone.utc).date().isoformat()
+        assert days == sorted(days, key=lambda d: d["date"])
+
+    def test_new_cards_are_due_today(self, client):
+        deck = _deck(client)
+        _card(client, deck)
+        _card(client, deck)
+        days = client.get("/stats/due", params={"days": 3}).json()
+        assert [d["count"] for d in days] == [2, 0, 0]
+
+    def test_reviewed_card_moves_to_its_due_day(self, client):
+        deck = _deck(client)
+        card = _review(client, _card(client, deck), EASY).json()
+        due = _parse(card["due"]).date()
+        today = datetime.now(timezone.utc).date()
+        assert due > today
+        days = client.get("/stats/due", params={"days": (due - today).days + 1}).json()
+        assert days[-1] == {"date": due.isoformat(), "count": 1}
+        assert sum(d["count"] for d in days) == 1
+        # outside the window the card is not counted at all
+        assert sum(d["count"] for d in client.get("/stats/due", params={"days": 1}).json()) == 0
+
+    def test_scoped_to_deck_and_topic(self, client):
+        topic = _topic(client)
+        inside = _deck(client, "In", topic_id=topic["id"])
+        outside = _deck(client, "Out")
+        _card(client, inside)
+        _card(client, outside)
+        _card(client, outside)
+
+        def today(**scope):
+            return client.get("/stats/due", params={"days": 1, **scope}).json()[0]["count"]
+
+        assert today() == 3
+        assert today(topic_id=topic["id"]) == 1
+        assert today(deck_id=outside["id"]) == 2
+
+    def test_unknown_scope_is_404(self, client):
+        assert client.get("/stats/due", params={"deck_id": 999}).status_code == 404
+        assert client.get("/stats/due", params={"topic_id": 999}).status_code == 404
+
+
+class TestProgressHistory:
+    def _known(self, client, **params):
+        return [d["known"] for d in client.get("/stats/progress", params={"days": 2, **params}).json()]
+
+    def test_empty_without_reviews(self, client):
+        _card(client, _deck(client))
+        days = client.get("/stats/progress", params={"days": 7}).json()
+        assert len(days) == 7
+        assert all(d["known"] == 0 for d in days)
+        assert days[-1]["date"] == datetime.now(timezone.utc).date().isoformat()
+
+    def test_counts_cards_last_rated_good_or_easy(self, client):
+        deck = _deck(client)
+        good, easy, hard, again = (_card(client, deck) for _ in range(4))
+        _review(client, good, GOOD)
+        _review(client, easy, EASY)
+        _review(client, hard, HARD)
+        _review(client, again, AGAIN)
+        assert self._known(client) == [0, 2]
+
+    def test_latest_rating_decides(self, client):
+        deck = _deck(client)
+        card = _card(client, deck)
+        _review(client, card, GOOD)
+        _review(client, card, AGAIN)
+        assert self._known(client) == [0, 0]
+        _review(client, card, GOOD)
+        _review(client, card, GOOD)
+        assert self._known(client) == [0, 1]
+
+    def test_earlier_days_keep_their_count(self):
+        from unittest.mock import MagicMock, patch
+        from app.services import stats_service
+
+        def log(card_id, rating, day, hour=12):
+            return MagicMock(card_id=card_id, rating=rating,
+                             reviewed_at=datetime(2030, 1, day, hour, tzinfo=timezone.utc))
+
+        api = MagicMock()
+        api.__enter__.return_value = api
+        # card 1 known since before the window, card 2 wrong on the 2nd and right on the 3rd
+        api.list_review_logs.return_value = [
+            log(1, GOOD, 1), log(2, GOOD, 1), log(2, AGAIN, 2), log(2, GOOD, 3), log(1, HARD, 4),
+        ]
+        with patch.object(stats_service, "db", return_value=api):
+            days = stats_service.progress_history(3, now=datetime(2030, 1, 4, 18, tzinfo=timezone.utc))
+        assert [(d.date.day, d.known) for d in days] == [(2, 1), (3, 2), (4, 1)]
+
+    def test_scoped_to_deck_and_topic(self, client):
+        topic = _topic(client)
+        inside = _deck(client, "In", topic_id=topic["id"])
+        outside = _deck(client, "Out")
+        _review(client, _card(client, inside), GOOD)
+        _review(client, _card(client, outside), EASY)
+        _review(client, _card(client, outside), EASY)
+        assert self._known(client)[-1] == 3
+        assert self._known(client, topic_id=topic["id"])[-1] == 1
+        assert self._known(client, deck_id=outside["id"])[-1] == 2
+
+    def test_unknown_scope_is_404(self, client):
+        assert client.get("/stats/progress", params={"deck_id": 999}).status_code == 404
+        assert client.get("/stats/progress", params={"topic_id": 999}).status_code == 404
+

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, downloadJson, useLoad } from '../api.js'
 import Icon from '../components/Icon.jsx'
+import { Breadcrumbs } from '../components/Layout.jsx'
 import { ConfirmDialog } from '../components/Modal.jsx'
 import { TopicForm, DeckForm, ImportForm } from '../components/Forms.jsx'
 import { OverviewCard, StatsPanel, Loading, LoadError, examLabel } from '../components/Stats.jsx'
@@ -42,11 +43,11 @@ export default function TopicPage() {
 
   return (
     <>
-      <Link to="/" className="crumb"><Icon name="back" size={16} /> Übersicht</Link>
+      <Breadcrumbs items={[{ label: 'Übersicht', to: '/' }, { label: topic.name }]} />
 
       <header className="page-head">
         <div>
-          <p className="eyebrow">Topic{exam && ` · ${exam}`}</p>
+          <p className="eyebrow">Projekt{exam && ` · ${exam}`}</p>
           <h1>{topic.name}</h1>
           {topic.description && <p className="lead">{topic.description}</p>}
         </div>
@@ -89,7 +90,7 @@ export default function TopicPage() {
         </div>
         {decks.length === 0 ? (
           <div className="empty">
-            <p className="muted">Dieses Topic hat noch keine Decks.</p>
+            <p className="muted">Dieses Projekt hat noch keine Decks.</p>
             <button className="btn btn-primary" onClick={() => setDialog('deck')}>Erstes Deck anlegen</button>
           </div>
         ) : (
@@ -112,7 +113,7 @@ export default function TopicPage() {
       )}
       {dialog === 'delete' && (
         <ConfirmDialog
-          title="Topic löschen?"
+          title="Projekt löschen?"
           text={`„${topic.name}“ wird mit ${decks.length} ${decks.length === 1 ? 'Deck' : 'Decks'} und ${stats.total_cards} Karten endgültig gelöscht.`}
           onClose={close}
           onConfirm={async () => {

@@ -134,3 +134,13 @@ class ReviewDay(BaseModel):
     hard: int
     good: int
     easy: int
+
+
+class ProgressDay(BaseModel):
+    date: date
+    known: int
+
+
+class DueDay(BaseModel):
+    date: date
+    count: int

@@ -38,6 +38,21 @@ export function ThemeToggle() {
   )
 }
 
+// Path from the dashboard down to the current page; every item but the last is a link.
+export function Breadcrumbs({ items }) {
+  return (
+    <nav className="crumbs" aria-label="Brotkrumen">
+      <ol>
+        {items.map((item, i) => (
+          <li key={i}>
+            {item.to ? <Link to={item.to}>{item.label}</Link> : <span aria-current="page">{item.label}</span>}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
 export default function Layout() {
   return (
     <>

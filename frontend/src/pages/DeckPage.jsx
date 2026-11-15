@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, downloadJson, imageUrl, useLoad } from '../api.js'
 import Icon from '../components/Icon.jsx'
+import { Breadcrumbs } from '../components/Layout.jsx'
 import { ConfirmDialog } from '../components/Modal.jsx'
 import { DeckForm, CardForm } from '../components/Forms.jsx'
 import { StatsPanel, Loading, LoadError } from '../components/Stats.jsx'
@@ -113,9 +114,13 @@ export default function DeckPage() {
 
   return (
     <>
-      <Link to={topic ? `/topics/${topic.id}` : '/'} className="crumb">
-        <Icon name="back" size={16} /> {topic ? topic.name : 'Übersicht'}
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: 'Übersicht', to: '/' },
+          ...(topic ? [{ label: topic.name, to: `/topics/${topic.id}` }] : []),
+          { label: deck.name },
+        ]}
+      />
 
       <header className="page-head">
         <div>
@@ -132,7 +137,7 @@ export default function DeckPage() {
 
       {notice && <p className="notice" onClick={() => setNotice(null)}>{notice}</p>}
 
-      <StatsPanel stats={stats} deckId={id}>
+      <StatsPanel stats={stats} deckId={id} chart="forecast">
           {stats.due_cards > 0 ? (
             <Link to={`/study/deck/${id}`} className="btn btn-primary">Fällige lernen</Link>
           ) : (

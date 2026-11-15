@@ -118,8 +118,13 @@ kbd {
 .hero { padding: 2.5rem 0 0.5rem; margin-top: 0 !important; }
 .hero h1 { max-width: 18ch; margin-bottom: 1.75rem; }
 
-.crumb { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--muted); font-size: 0.925rem; margin-top: 1rem; }
-.crumb:hover { color: var(--text); }
+.crumbs { margin-top: 1rem; color: var(--muted); font-size: 0.925rem; }
+.crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.5rem; margin: 0; padding: 0; list-style: none; }
+.crumbs li { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.crumbs li + li::before { content: '/'; color: var(--border-strong); }
+.crumbs a { color: inherit; }
+.crumbs a:hover { color: var(--accent); }
+.crumbs [aria-current] { color: var(--text); overflow-wrap: anywhere; }
 
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
 
@@ -342,6 +347,14 @@ section > .section-title { margin-bottom: 1rem; }
 }
 .rchart-axis { display: flex; justify-content: space-between; margin: 0.4rem 5px 0; color: var(--muted); font-size: 0.78rem; }
 
+.pchart-plot { border-top: 1px dashed var(--border); margin-top: 1.4rem; }
+.pchart-max { position: absolute; right: 0; bottom: calc(100% + 0.25rem); color: var(--muted); font-size: 0.78rem; pointer-events: none; }
+.fchart-plot { display: flex; align-items: stretch; margin: 0; cursor: default; }
+.fchart-col { flex: 1; min-width: 0; display: flex; align-items: flex-end; padding: 0 2px; }
+.fchart-col i { width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--border-strong); transition: background 0.15s; }
+.fchart-col i.is-today { background: var(--accent); }
+.fchart-col.is-active i { background: var(--accent-hover); }
+
 .tip {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -437,8 +450,48 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 
 .card-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.25rem; }
 .image-field { margin-top: 0.6rem; }
-.image-preview { display: flex; align-items: center; gap: 0.75rem; }
-.image-preview img { height: 64px; max-width: 120px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
+.dropzone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4.5rem;
+  padding: 0.75rem 1rem;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.dropzone:hover { border-color: var(--accent); color: var(--text); }
+.dropzone:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dropzone.is-over { border-color: var(--accent); border-style: solid; background: var(--accent-soft); color: var(--text); }
+.dropzone.has-file { border-style: solid; }
+.dropzone > svg { flex: none; }
+.dropzone > img { height: 64px; max-width: 120px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); flex: none; }
+.dropzone-text { min-width: 0; overflow-wrap: anywhere; }
+.dropzone-text strong { color: var(--text); font-weight: 500; }
+.dropzone-large { flex-direction: column; justify-content: center; text-align: center; gap: 0.5rem; min-height: 8rem; padding: 1.25rem 1rem; }
+.dropzone.has-file:not(.dropzone-large) { padding-right: 2.75rem; }
+.dropzone-remove {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.dropzone-remove:hover { background: var(--border); color: var(--danger); }
+.dropzone-error { margin-top: 0.4rem; font-size: 0.875rem; }
 
 /* ── Study ──────────────────────────────────────────────────────────────── */
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
-from .schemas import ReviewDay
+from .schemas import DueDay, ProgressDay, ReviewDay
 from ..services import stats_service
 
 router = APIRouter(prefix="/stats", tags=["stats"])
@@ -19,3 +19,35 @@ def review_history(
     if history is None:
         raise HTTPException(status_code=404, detail="Deck or topic not found")
     return history
+
+
+@router.get("/due", response_model=list[DueDay])
+def due_forecast(
+    days: int = Query(14, ge=1, le=365),
+    deck_id: int | None = None,
+    topic_id: int | None = None,
+    tz_offset: int = Query(0, ge=-840, le=840, description="Minutes east of UTC"),
+):
+    """Cards becoming due per day over the next `days` days; overdue cards count towards today."""
+    forecast = stats_service.due_forecast(
+        days, deck_id=deck_id, topic_id=topic_id, tz_offset_minutes=tz_offset
+    )
+    if forecast is None:
+        raise HTTPException(status_code=404, detail="Deck or topic not found")
+    return forecast
+
+
+@router.get("/progress", response_model=list[ProgressDay])
+def progress_history(
+    days: int = Query(30, ge=1, le=365),
+    deck_id: int | None = None,
+    topic_id: int | None = None,
+    tz_offset: int = Query(0, ge=-840, le=840, description="Minutes east of UTC"),
+):
+    """Cards whose latest rating was Good or Easy, at the end of each of the last `days` days."""
+    progress = stats_service.progress_history(
+        days, deck_id=deck_id, topic_id=topic_id, tz_offset_minutes=tz_offset
+    )
+    if progress is None:
+        raise HTTPException(status_code=404, detail="Deck or topic not found")
+    return progress

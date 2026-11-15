@@ -35,7 +35,7 @@ export function TopicForm({ topic, onSaved, onClose }) {
   }
 
   return (
-    <Modal title={topic ? 'Topic bearbeiten' : 'Neues Topic'} onClose={onClose}>
+    <Modal title={topic ? 'Projekt bearbeiten' : 'Neues Projekt'} onClose={onClose}>
       <form onSubmit={submit}>
         <label className="field">
           <span>Name</span>
@@ -89,9 +89,9 @@ export function DeckForm({ deck, topics, defaultTopicId = null, onSaved, onClose
           <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
         <label className="field">
-          <span>Topic</span>
+          <span>Projekt</span>
           <select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-            <option value="">Kein Topic</option>
+            <option value="">Kein Projekt</option>
             {topics.map((t) => (
               <option key={t.id} value={t.id}>{t.name}</option>
             ))}
@@ -104,37 +104,114 @@ export function DeckForm({ deck, topics, defaultTopicId = null, onSaved, onClose
   )
 }
 
+// ── Dropzone ─────────────────────────────────────────────────────────────────
+
+// Drag-and-drop target that also opens the file picker when clicked or activated by keyboard.
+function Dropzone({ accept, matches, onFile, rejectText, className = '', children }) {
+  const input = useRef(null)
+  const [over, setOver] = useState(false)
+  const [rejected, setRejected] = useState(false)
+
+  const take = (file) => {
+    if (!file) return
+    const ok = matches(file)
+    setRejected(!ok)
+    if (ok) onFile(file)
+  }
+
+  return (
+    <>
+      <div
+        className={`dropzone ${over ? 'is-over' : ''} ${className}`}
+        role="button"
+        tabIndex={0}
+        onClick={() => input.current.click()}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) return // leave the save shortcut to the form
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            input.current.click()
+          }
+        }}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'copy'
+          setOver(true)
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setOver(false)
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          setOver(false)
+          take(e.dataTransfer.files[0])
+        }}
+      >
+        <input
+          ref={input}
+          type="file"
+          accept={accept}
+          hidden
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            const file = e.target.files[0]
+            e.target.value = ''
+            take(file)
+          }}
+        />
+        {children}
+      </div>
+      {rejected && <p className="error dropzone-error">{rejectText}</p>}
+    </>
+  )
+}
+
 // ── Card ─────────────────────────────────────────────────────────────────────
+
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+const isImage = (file) => IMAGE_TYPES.includes(file.type)
 
 const emptyImage = (existing) => ({ existing: existing ?? null, file: null, preview: null })
 
 function ImageField({ value, onChange }) {
-  const input = useRef(null)
   const src = value.preview ?? imageUrl(value.existing)
 
   useEffect(() => () => value.preview && URL.revokeObjectURL(value.preview), [value.preview])
 
-  const pick = (e) => {
-    const file = e.target.files[0]
-    e.target.value = ''
-    if (file) onChange({ existing: null, file, preview: URL.createObjectURL(file) })
-  }
-
   return (
     <div className="image-field">
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden onChange={pick} />
-      {src ? (
-        <div className="image-preview">
-          <img src={src} alt="" />
-          <button type="button" className="btn btn-small" onClick={() => onChange(emptyImage())}>
-            Bild entfernen
-          </button>
-        </div>
-      ) : (
-        <button type="button" className="btn btn-small btn-ghost" onClick={() => input.current.click()}>
-          <Icon name="image" size={16} /> Bild hinzufügen
-        </button>
-      )}
+      <Dropzone
+        accept={IMAGE_TYPES.join(',')}
+        matches={isImage}
+        rejectText="Nur PNG, JPEG, GIF oder WebP."
+        className={src ? 'has-file' : ''}
+        onFile={(file) => onChange({ existing: null, file, preview: URL.createObjectURL(file) })}
+      >
+        {src ? (
+          <>
+            <img src={src} alt="" />
+            <span className="dropzone-text">Klicken oder Bild hierher ziehen, um es zu ersetzen</span>
+            <button
+              type="button"
+              className="dropzone-remove"
+              title="Bild entfernen"
+              aria-label="Bild entfernen"
+              onClick={(e) => {
+                e.stopPropagation()
+                onChange(emptyImage())
+              }}
+            >
+              <Icon name="close" size={16} />
+            </button>
+          </>
+        ) : (
+          <>
+            <Icon name="image" size={20} />
+            <span className="dropzone-text">Bild hierher ziehen oder klicken</span>
+          </>
+        )}
+      </Dropzone>
     </div>
   )
 }
@@ -228,6 +305,8 @@ export function CardForm({ card, deckId, onSaved, onClose }) {
 
 // ── Import ───────────────────────────────────────────────────────────────────
 
+const isJson = (file) => file.type === 'application/json' || file.name.toLowerCase().endsWith('.json')
+
 export function ImportForm({ topics, defaultTopicId = null, onImported, onClose }) {
   const [file, setFile] = useState(null)
   const [topicId, setTopicId] = useState(String(defaultTopicId ?? ''))
@@ -246,17 +325,34 @@ export function ImportForm({ topics, defaultTopicId = null, onImported, onClose 
     <Modal title="Importieren" onClose={onClose}>
       <form onSubmit={submit}>
         <p className="muted">
-          Wähle eine zuvor exportierte JSON-Datei. Topic-Exporte legen ein neues Topic mit allen Decks an,
+          Wähle eine zuvor exportierte JSON-Datei. Projekt-Exporte legen ein neues Projekt mit allen Decks an,
           Deck-Exporte ein einzelnes Deck.
         </p>
-        <label className="field">
+        <div className="field">
           <span>Datei</span>
-          <input type="file" accept=".json,application/json" required onChange={(e) => setFile(e.target.files[0] ?? null)} />
-        </label>
+          <Dropzone
+            accept=".json,application/json"
+            matches={isJson}
+            rejectText="Nur JSON-Dateien."
+            className={`dropzone-large ${file ? 'has-file' : ''}`}
+            onFile={setFile}
+          >
+            <Icon name="upload" size={22} />
+            {file ? (
+              <span className="dropzone-text">
+                <strong>{file.name}</strong>
+                <br />
+                Klicken oder andere Datei hierher ziehen, um sie zu ersetzen
+              </span>
+            ) : (
+              <span className="dropzone-text">JSON-Datei hierher ziehen oder klicken</span>
+            )}
+          </Dropzone>
+        </div>
         <label className="field">
-          <span>Deck einem Topic zuordnen <em>nur für Deck-Exporte</em></span>
+          <span>Deck einem Projekt zuordnen <em>nur für Deck-Exporte</em></span>
           <select value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-            <option value="">Kein Topic</option>
+            <option value="">Kein Projekt</option>
             {topics.map((t) => (
               <option key={t.id} value={t.id}>{t.name}</option>
             ))}

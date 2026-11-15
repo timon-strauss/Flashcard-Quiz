@@ -11,13 +11,6 @@ const STATES = [
   { key: 'relearning_cards', label: 'Erneut lernen', color: 'var(--s-relearning)' },
 ]
 
-const RATINGS = [
-  { key: 'again', label: 'Nochmal' },
-  { key: 'hard', label: 'Schwer' },
-  { key: 'good', label: 'Gut' },
-  { key: 'easy', label: 'Einfach' },
-]
-
 const percent = (n, total) => (total ? Math.round((n / total) * 100) : 0)
 export const cardCount = (n) => `${n} ${n === 1 ? 'Karte' : 'Karten'}`
 
@@ -100,20 +93,22 @@ const axisFormat = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'sh
 const localDate = (iso) => new Date(`${iso}T00:00`)
 
 /**
- * Line graph of reviews per day. The SVG is stretched to the plot (0–100 in both
- * directions), so points are plain percentages; the hover marker and tooltip are
- * HTML positioned with the same percentages.
+ * Line graph of the known cards (last rated Good or Easy) per day, on a scale from zero
+ * to all cards. The SVG is stretched to the plot (0–100 in both directions), so points
+ * are plain percentages; the hover marker and tooltip are HTML positioned with the same
+ * percentages.
  */
-function ReviewChart({ history }) {
+function ProgressChart({ progress, totalCards }) {
   const [active, setActive] = useState(null)
-  const n = history.length
-  const total = history.reduce((sum, d) => sum + d.total, 0)
-  const max = Math.max(...history.map((d) => d.total), 1)
+  const n = progress.length
+  // cards deleted since can leave an earlier day above today's total
+  const max = Math.max(totalCards, ...progress.map((d) => d.known), 1)
   const x = (i) => (n > 1 ? (i / (n - 1)) * 100 : 50)
   const y = (value) => 100 - (value / max) * 100
-  const line = history.map((d, i) => `${i ? 'L' : 'M'}${x(i)} ${y(d.total)}`).join(' ')
-  const day = active !== null ? history[active] : null
+  const line = progress.map((d, i) => `${i ? 'L' : 'M'}${x(i)} ${y(d.known)}`).join(' ')
+  const day = active !== null ? progress[active] : null
   const edge = active !== null && (active < n * 0.2 ? 'start' : active > n * 0.8 ? 'end' : 'mid')
+  const latest = progress[n - 1].known
 
   const pick = (e) => {
     const box = e.currentTarget.getBoundingClientRect()
@@ -129,21 +124,18 @@ function ReviewChart({ history }) {
 
   return (
     <div className="rchart">
-      <p className="rchart-head">
-        <b>{total}</b> {total === 1 ? 'Wiederholung' : 'Wiederholungen'}
-        {total > 0 && <span> · Spitze {max} am Tag</span>}
-      </p>
       <div
-        className="rchart-plot"
+        className="rchart-plot pchart-plot"
         tabIndex={0}
         role="img"
-        aria-label={`Wiederholungen pro Tag, ${total} in ${n} Tagen, höchstens ${max} an einem Tag`}
+        aria-label={`Gekonnte Karten pro Tag über ${n} Tage, heute ${latest} von ${totalCards}`}
         onPointerMove={pick}
         onPointerDown={pick}
         onPointerLeave={() => setActive(null)}
         onKeyDown={onKey}
         onBlur={() => setActive(null)}
       >
+        <span className="pchart-max">{max} Karten</span>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <path className="rchart-area" d={`${line} L${x(n - 1)} 100 L${x(0)} 100 Z`} />
           <path className="rchart-line" d={line} vectorEffect="non-scaling-stroke" />
@@ -151,21 +143,80 @@ function ReviewChart({ history }) {
         {day && (
           <>
             <i className="rchart-cross" style={{ left: `${x(active)}%` }} />
-            <i className="rchart-dot" style={{ left: `${x(active)}%`, top: `${y(day.total)}%` }} />
+            <i className="rchart-dot" style={{ left: `${x(active)}%`, top: `${y(day.known)}%` }} />
             <div className={`tip tip-${edge}`} style={{ left: `${x(active)}%` }}>
               <span className="tip-title">{dayFormat.format(localDate(day.date))}</span>
-              <span className="tip-row"><b>{day.total}</b> {day.total === 1 ? 'Wiederholung' : 'Wiederholungen'}</span>
-              {RATINGS.filter((r) => day[r.key] > 0).map((r) => (
-                <span key={r.key} className="tip-row muted"><b>{day[r.key]}</b> {r.label}</span>
-              ))}
+              <span className="tip-row"><b>{day.known}</b> von {max} Karten gekonnt</span>
+              <span className="tip-row muted">zuletzt mit Gut oder Einfach bewertet</span>
             </div>
           </>
         )}
       </div>
       <div className="rchart-axis">
-        <span>{axisFormat.format(localDate(history[0].date))}</span>
-        <span>{axisFormat.format(localDate(history[Math.floor(n / 2)].date))}</span>
+        <span>{axisFormat.format(localDate(progress[0].date))}</span>
+        <span>{axisFormat.format(localDate(progress[Math.floor(n / 2)].date))}</span>
         <span>Heute</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Upcoming due cards ───────────────────────────────────────────────────────
+
+const cardsLabel = (n) => (n === 1 ? 'Karte' : 'Karten')
+
+/** Bar per day of cards becoming due; the first bar is today and includes everything overdue. */
+function ForecastChart({ forecast }) {
+  const [active, setActive] = useState(null)
+  const n = forecast.length
+  const total = forecast.reduce((sum, d) => sum + d.count, 0)
+  const max = Math.max(...forecast.map((d) => d.count), 1)
+  const day = active !== null ? forecast[active] : null
+  const edge = active !== null && (active < n * 0.2 ? 'start' : active > n * 0.8 ? 'end' : 'mid')
+
+  const onKey = (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+    e.preventDefault()
+    const step = e.key === 'ArrowRight' ? 1 : -1
+    setActive((i) => Math.min(n - 1, Math.max(0, (i ?? -1) + step)))
+  }
+
+  return (
+    <div className="rchart">
+      <p className="rchart-head">
+        <b>{total}</b> {cardsLabel(total)} fällig
+        {total > 0 && <span> · davon {forecast[0].count} heute</span>}
+      </p>
+      <div
+        className="rchart-plot fchart-plot"
+        tabIndex={0}
+        role="img"
+        aria-label={`Fällige Karten pro Tag, ${total} in den nächsten ${n} Tagen, davon ${forecast[0].count} heute`}
+        onPointerLeave={() => setActive(null)}
+        onKeyDown={onKey}
+        onBlur={() => setActive(null)}
+      >
+        {forecast.map((d, i) => (
+          <div
+            key={d.date}
+            className={`fchart-col${i === active ? ' is-active' : ''}`}
+            onPointerEnter={() => setActive(i)}
+            onPointerDown={() => setActive(i)}
+          >
+            <i className={i === 0 ? 'is-today' : ''} style={{ height: `${(d.count / max) * 100}%` }} />
+          </div>
+        ))}
+        {day && (
+          <div className={`tip tip-${edge}`} style={{ left: `${((active + 0.5) / n) * 100}%` }}>
+            <span className="tip-title">{active === 0 ? 'Heute' : dayFormat.format(localDate(day.date))}</span>
+            <span className="tip-row"><b>{day.count}</b> {cardsLabel(day.count)} fällig</span>
+          </div>
+        )}
+      </div>
+      <div className="rchart-axis">
+        <span>Heute</span>
+        <span>{axisFormat.format(localDate(forecast[Math.floor(n / 2)].date))}</span>
+        <span>{axisFormat.format(localDate(forecast[n - 1].date))}</span>
       </div>
     </div>
   )
@@ -174,11 +225,45 @@ function ReviewChart({ history }) {
 // ── Panel ────────────────────────────────────────────────────────────────────
 
 const HISTORY_DAYS = 30
+const FORECAST_DAYS = 14
 
-/** Statistics for one topic or one deck: headline numbers, the state pie and the reviews over time. */
-export function StatsPanel({ stats, deckId, topicId, extraTile, children }) {
-  const history = useLoad(() => api.reviewHistory({ deckId, topicId, days: HISTORY_DAYS }), [deckId, topicId])
+function ForecastFigure({ deckId, topicId, stats }) {
+  // reloads whenever cards were added, removed or reviewed
+  const forecast = useLoad(
+    () => api.dueForecast({ deckId, topicId, days: FORECAST_DAYS }),
+    [deckId, topicId, stats.total_cards, stats.due_cards],
+  )
 
+  return (
+    <figure className="chart">
+      <figcaption>Fällig · nächste {FORECAST_DAYS} Tage</figcaption>
+      {forecast.data ? (
+        <ForecastChart forecast={forecast.data} />
+      ) : (
+        <p className="muted small">{forecast.error ? 'Vorschau konnte nicht geladen werden.' : 'Lädt …'}</p>
+      )}
+    </figure>
+  )
+}
+
+function ProgressFigure({ deckId, topicId, stats }) {
+  const progress = useLoad(() => api.progressHistory({ deckId, topicId, days: HISTORY_DAYS }), [deckId, topicId])
+
+  return (
+    <figure className="chart">
+      <figcaption>Fortschritt der letzten {HISTORY_DAYS} Tage</figcaption>
+      {progress.data ? (
+        <ProgressChart progress={progress.data} totalCards={stats.total_cards} />
+      ) : (
+        <p className="muted small">{progress.error ? 'Fortschritt konnte nicht geladen werden.' : 'Lädt …'}</p>
+      )}
+    </figure>
+  )
+}
+
+/** Statistics for one topic or one deck: headline numbers, the state pie and either the
+ * known cards over time (`chart="progress"`) or the upcoming due cards (`chart="forecast"`). */
+export function StatsPanel({ stats, deckId, topicId, chart = 'progress', extraTile, children }) {
   return (
     <section className="panel">
       <div className="tiles">
@@ -202,14 +287,11 @@ export function StatsPanel({ stats, deckId, topicId, extraTile, children }) {
           <figcaption>Kartenstatus</figcaption>
           <StatePie stats={stats} />
         </figure>
-        <figure className="chart">
-          <figcaption>Verlauf · letzte {HISTORY_DAYS} Tage</figcaption>
-          {history.data ? (
-            <ReviewChart history={history.data} />
-          ) : (
-            <p className="muted small">{history.error ? 'Verlauf konnte nicht geladen werden.' : 'Lädt …'}</p>
-          )}
-        </figure>
+        {chart === 'forecast' ? (
+          <ForecastFigure deckId={deckId} topicId={topicId} stats={stats} />
+        ) : (
+          <ProgressFigure deckId={deckId} topicId={topicId} stats={stats} />
+        )}
       </div>
 
       {children && <div className="row">{children}</div>}
