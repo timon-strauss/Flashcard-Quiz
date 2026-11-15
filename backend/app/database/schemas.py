@@ -106,3 +106,7 @@ class CardStats(BaseModel):
     learning: int = 0
     review: int = 0
     relearning: int = 0
+    # not due before the exam is over; without an upcoming exam: a long interval
+    ready: int = 0
+    # most recent review of any card
+    last_review: datetime | None = None

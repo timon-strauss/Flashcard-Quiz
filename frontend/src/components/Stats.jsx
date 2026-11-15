@@ -1,18 +1,45 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, useLoad } from '../api.js'
+import RichText from './RichText.jsx'
 
-// The four states are disjoint and add up to total_cards.
-// Colors are fixed per state (validated categorical palette, see styles.css).
-const STATES = [
-  { key: 'new_cards', label: 'Neu', color: 'var(--s-new)' },
-  { key: 'learning_cards', label: 'Lernen', color: 'var(--s-learning)' },
-  { key: 'review_cards', label: 'Gefestigt', color: 'var(--s-review)' },
-  { key: 'relearning_cards', label: 'Erneut lernen', color: 'var(--s-relearning)' },
+// How well prepared a topic or deck is, as three disjoint groups that add up to total_cards:
+// what is urgent, what is still coming, and what is already done.
+// Colors are fixed per group (validated categorical palette, see styles.css).
+const GROUPS = [
+  {
+    key: 'due',
+    label: 'Fällig',
+    color: 'var(--c-orange)',
+    hint: 'Jetzt dran: neue Karten und solche, die wieder fällig sind',
+  },
+  {
+    key: 'pending',
+    label: 'Gelernt',
+    color: 'var(--c-yellow)',
+    hint: 'Im Plan, kommt aber vor der Klausur noch einmal dran',
+  },
+  {
+    key: 'ready',
+    label: 'Gefestigt',
+    color: 'var(--c-green)',
+    hint: 'Wird vor der Klausur nicht mehr fällig (ohne Klausurtermin: Intervall ab drei Wochen)',
+  },
 ]
 
+/** Card counts per group. New cards are due, so they count as "Fällig". */
+function groupCounts(stats) {
+  const ready = stats.ready_cards ?? 0
+  return { due: stats.due_cards, ready, pending: Math.max(stats.total_cards - stats.due_cards - ready, 0) }
+}
+
 const percent = (n, total) => (total ? Math.round((n / total) * 100) : 0)
-export const cardCount = (n) => `${n} ${n === 1 ? 'Karte' : 'Karten'}`
+const cardsLabel = (n) => (n === 1 ? 'Karte' : 'Karten')
+export const cardCount = (n) => `${n} ${cardsLabel(n)}`
+const readyPercent = (stats) => percent(stats.ready_cards ?? 0, stats.total_cards)
+
+/** Sorts by name the way a person would: „Kapitel 2“ before „Kapitel 10“. */
+export const byName = (a, b) => a.name.localeCompare(b.name, 'de', { numeric: true, sensitivity: 'base' })
 
 // ── Pie ──────────────────────────────────────────────────────────────────────
 
@@ -22,16 +49,17 @@ export const cardCount = (n) => `${n} ${n === 1 ? 'Karte' : 'Karten'}`
  */
 function Pie({ stats, size, thickness, active = null, onActive }) {
   const total = stats.total_cards
-  const parts = STATES.filter((s) => stats[s.key] > 0)
+  const counts = groupCounts(stats)
+  const parts = GROUPS.filter((s) => counts[s.key] > 0)
   const gap = parts.length > 1 ? 0.7 : 0 // surface-colored spacer between slices
   let start = 0
-  const summary = parts.map((s) => `${stats[s.key]} ${s.label}`).join(', ') || 'Keine Karten'
+  const summary = parts.map((s) => `${counts[s.key]} ${s.label}`).join(', ') || 'Keine Karten'
 
   return (
     <svg width={size} height={size} viewBox="0 0 42 42" role="img" aria-label={summary} className="pie">
       <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--surface-2)" strokeWidth={thickness} />
       {parts.map((s) => {
-        const share = (stats[s.key] / total) * 100
+        const share = (counts[s.key] / total) * 100
         const length = Math.max(share - gap, 0.5)
         const offset = 25 - start - gap / 2 // 25 = start at 12 o'clock
         start += share
@@ -53,32 +81,44 @@ function Pie({ stats, size, thickness, active = null, onActive }) {
   )
 }
 
-/** Pie of the learning states with a legend; hovering a slice or legend row shows its share. */
+/** Pie of the three groups with a legend. The center shows the share that is done;
+ * hovering a slice or legend row shows that group instead. */
 function StatePie({ stats }) {
   const [active, setActive] = useState(null)
-  const shown = STATES.find((s) => s.key === active)
+  const shown = GROUPS.find((s) => s.key === active)
   const total = stats.total_cards
+  const counts = groupCounts(stats)
   return (
     <div className="statepie">
       <div className="statepie-ring">
         <Pie stats={stats} size={168} thickness={5.5} active={active} onActive={setActive} />
         <div className="statepie-center">
-          <b>{shown ? stats[shown.key] : total}</b>
-          <span>{shown ? `${shown.label} · ${percent(stats[shown.key], total)} %` : total === 1 ? 'Karte' : 'Karten'}</span>
+          {shown ? (
+            <>
+              <b>{counts[shown.key]}</b>
+              <span>{shown.label}<br />{percent(counts[shown.key], total)} %</span>
+            </>
+          ) : (
+            <>
+              <b>{readyPercent(stats)}<small> %</small></b>
+              <span>gefestigt</span>
+            </>
+          )}
         </div>
       </div>
       <ul className="legend">
-        {STATES.map((s) => (
+        {GROUPS.map((s) => (
           <li
             key={s.key}
+            title={s.hint}
             className={active && active !== s.key ? 'dim' : ''}
             onPointerEnter={() => setActive(s.key)}
             onPointerLeave={() => setActive(null)}
           >
             <i style={{ background: s.color }} />
             <span>{s.label}</span>
-            <b>{stats[s.key]}</b>
-            <em>{percent(stats[s.key], total)} %</em>
+            <b>{counts[s.key]}</b>
+            <em>{percent(counts[s.key], total)} %</em>
           </li>
         ))}
       </ul>
@@ -135,7 +175,7 @@ function ProgressChart({ progress, totalCards }) {
         onKeyDown={onKey}
         onBlur={() => setActive(null)}
       >
-        <span className="pchart-max">{max} Karten</span>
+        <span className="pchart-max">{cardCount(max)}</span>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <path className="rchart-area" d={`${line} L${x(n - 1)} 100 L${x(0)} 100 Z`} />
           <path className="rchart-line" d={line} vectorEffect="non-scaling-stroke" />
@@ -146,7 +186,7 @@ function ProgressChart({ progress, totalCards }) {
             <i className="rchart-dot" style={{ left: `${x(active)}%`, top: `${y(day.known)}%` }} />
             <div className={`tip tip-${edge}`} style={{ left: `${x(active)}%` }}>
               <span className="tip-title">{dayFormat.format(localDate(day.date))}</span>
-              <span className="tip-row"><b>{day.known}</b> von {max} Karten gekonnt</span>
+              <span className="tip-row"><b>{day.known}</b> von {cardCount(max)} gekonnt</span>
               <span className="tip-row muted">zuletzt mit Gut oder Einfach bewertet</span>
             </div>
           </>
@@ -162,8 +202,6 @@ function ProgressChart({ progress, totalCards }) {
 }
 
 // ── Upcoming due cards ───────────────────────────────────────────────────────
-
-const cardsLabel = (n) => (n === 1 ? 'Karte' : 'Karten')
 
 /** Bar per day of cards becoming due; the first bar is today and includes everything overdue. */
 function ForecastChart({ forecast }) {
@@ -184,7 +222,7 @@ function ForecastChart({ forecast }) {
   return (
     <div className="rchart">
       <p className="rchart-head">
-        <b>{total}</b> {cardsLabel(total)} fällig
+        <b>{total}</b> {total === 1 ? 'Karte wird' : 'Karten werden'} fällig
         {total > 0 && <span> · davon {forecast[0].count} heute</span>}
       </p>
       <div
@@ -236,7 +274,7 @@ function ForecastFigure({ deckId, topicId, stats }) {
 
   return (
     <figure className="chart">
-      <figcaption>Fällig · nächste {FORECAST_DAYS} Tage</figcaption>
+      <figcaption>Fälligkeiten · nächste {FORECAST_DAYS} Tage</figcaption>
       {forecast.data ? (
         <ForecastChart forecast={forecast.data} />
       ) : (
@@ -261,7 +299,7 @@ function ProgressFigure({ deckId, topicId, stats }) {
   )
 }
 
-/** Statistics for one topic or one deck: headline numbers, the state pie and either the
+/** Statistics for one topic or one deck: headline numbers, the preparation pie and either the
  * known cards over time (`chart="progress"`) or the upcoming due cards (`chart="forecast"`). */
 export function StatsPanel({ stats, deckId, topicId, chart = 'progress', extraTile, children }) {
   return (
@@ -269,22 +307,18 @@ export function StatsPanel({ stats, deckId, topicId, chart = 'progress', extraTi
       <div className="tiles">
         <div className="tile">
           <span className="tile-value accent">{stats.due_cards}</span>
-          <span className="tile-label">Fällig</span>
+          <span className="tile-label">Jetzt fällig</span>
         </div>
         <div className="tile">
           <span className="tile-value">{stats.total_cards}</span>
           <span className="tile-label">Karten</span>
-        </div>
-        <div className="tile">
-          <span className="tile-value">{percent(stats.review_cards, stats.total_cards)}<small> %</small></span>
-          <span className="tile-label">Gefestigt</span>
         </div>
         {extraTile}
       </div>
 
       <div className="charts">
         <figure className="chart">
-          <figcaption>Kartenstatus</figcaption>
+          <figcaption>Vorbereitung</figcaption>
           <StatePie stats={stats} />
         </figure>
         {chart === 'forecast' ? (
@@ -320,11 +354,11 @@ export function OverviewCard({ to, title, description, stats, meta }) {
         <h3>{title}</h3>
         {stats.due_cards > 0 && <span className="pill pill-accent">{stats.due_cards} fällig</span>}
       </div>
-      {description && <p className="ocard-desc">{description}</p>}
+      {description && <p className="ocard-desc"><RichText text={description} /></p>}
       <div className="ocard-foot">
         <Pie stats={stats} size={44} thickness={7} />
         <div className="ocard-meta">
-          <span>{cardCount(stats.total_cards)} · {percent(stats.review_cards, stats.total_cards)} % gefestigt</span>
+          <span>{cardCount(stats.total_cards)} · {readyPercent(stats)} % gefestigt</span>
           {meta && <span>{meta}</span>}
         </div>
       </div>
@@ -341,6 +375,16 @@ export function LoadError({ error }) {
     <div className="empty">
       <h3>Das hat nicht geklappt</h3>
       <p className="muted">{error.message}</p>
+      <Link to="/" className="btn">Zur Übersicht</Link>
+    </div>
+  )
+}
+
+export function NotFound() {
+  return (
+    <div className="empty">
+      <h3>Seite nicht gefunden</h3>
+      <p className="muted">Unter dieser Adresse gibt es nichts.</p>
       <Link to="/" className="btn">Zur Übersicht</Link>
     </div>
   )

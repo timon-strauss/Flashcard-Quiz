@@ -17,7 +17,7 @@ def review_history(
         days, deck_id=deck_id, topic_id=topic_id, tz_offset_minutes=tz_offset
     )
     if history is None:
-        raise HTTPException(status_code=404, detail="Deck or topic not found")
+        raise HTTPException(status_code=404, detail="Deck oder Projekt nicht gefunden")
     return history
 
 
@@ -33,7 +33,7 @@ def due_forecast(
         days, deck_id=deck_id, topic_id=topic_id, tz_offset_minutes=tz_offset
     )
     if forecast is None:
-        raise HTTPException(status_code=404, detail="Deck or topic not found")
+        raise HTTPException(status_code=404, detail="Deck oder Projekt nicht gefunden")
     return forecast
 
 
@@ -49,5 +49,5 @@ def progress_history(
         days, deck_id=deck_id, topic_id=topic_id, tz_offset_minutes=tz_offset
     )
     if progress is None:
-        raise HTTPException(status_code=404, detail="Deck or topic not found")
+        raise HTTPException(status_code=404, detail="Deck oder Projekt nicht gefunden")
     return progress

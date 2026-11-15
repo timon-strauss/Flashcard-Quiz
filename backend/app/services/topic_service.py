@@ -20,6 +20,8 @@ def _topic_stats(api, topic, today: date) -> TopicStats:
         learning_cards=stats.learning if stats else 0,
         review_cards=stats.review if stats else 0,
         relearning_cards=stats.relearning if stats else 0,
+        ready_cards=stats.ready if stats else 0,
+        last_review=stats.last_review if stats else None,
         days_until_exam=days_until_exam,
     )
 

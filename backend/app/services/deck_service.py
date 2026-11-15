@@ -19,6 +19,8 @@ def _deck_stats(api, deck_id: int) -> DeckStats:
         learning_cards=stats.learning,
         review_cards=stats.review,
         relearning_cards=stats.relearning,
+        ready_cards=stats.ready,
+        last_review=stats.last_review,
     )
 
 

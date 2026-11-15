@@ -1,10 +1,5 @@
 from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, Field
-from fastapi import HTTPException
-
-
-def _not_implemented():
-    raise HTTPException(status_code=501, detail="Endpoint not yet implemented")
 
 
 # ── Topics ────────────────────────────────────────────────────────────────────
@@ -34,6 +29,8 @@ class TopicStats(BaseModel):
     learning_cards: int
     review_cards: int
     relearning_cards: int
+    ready_cards: int = 0  # not due again before the exam; without exam: interval of 3+ weeks
+    last_review: datetime | None = None  # most recent review of any card
     days_until_exam: int | None = None  # null = no exam_date
 
 class TopicResponse(BaseModel):
@@ -72,6 +69,8 @@ class DeckStats(BaseModel):
     learning_cards: int
     review_cards: int
     relearning_cards: int
+    ready_cards: int = 0  # not due again before the exam; without exam: interval of 3+ weeks
+    last_review: datetime | None = None  # most recent review of any card
 
 class DeckResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

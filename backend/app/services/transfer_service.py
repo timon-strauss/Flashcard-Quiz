@@ -1,7 +1,7 @@
 import base64
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from ..database import db
 from ..database.schemas import (
@@ -142,14 +142,14 @@ def _import_deck_data(deck_data: dict, topic_id: int | None, api) -> dict:
 def import_transfer(payload: dict, target_topic_id: int | None = None) -> dict:
     version = payload.get("version")
     if version != 1:
-        raise ValueError(f"Unsupported export version: {version}")
+        raise ValueError(f"Nicht unterstützte Export-Version: {version}")
 
     kind = payload.get("type")
 
     if kind == "deck":
         with db() as api:
             if target_topic_id is not None and api.get_topic(target_topic_id) is None:
-                raise ValueError(f"Topic {target_topic_id} not found")
+                raise ValueError(f"Projekt {target_topic_id} nicht gefunden")
             result = _import_deck_data(payload["deck"], target_topic_id, api)
         return {"type": "deck", "created": result}
 
@@ -157,37 +157,27 @@ def import_transfer(payload: dict, target_topic_id: int | None = None) -> dict:
         # importing a full topic export into a single deck context is not allowed;
         # the caller must omit target_topic_id or use the topic import path
         raise ValueError(
-            "Diese Datei enthält ein ganzes Thema (mehrere Decks). "
-            "Importiere sie über das Dashboard, nicht über ein einzelnes Deck."
+            "Diese Datei enthält ein ganzes Projekt (mehrere Decks). "
+            "Importiere sie über die Übersicht, nicht in ein bestehendes Projekt."
         )
 
     elif kind == "topic":
         topic_data = payload["topic"]
         with db() as api:
-            if target_topic_id is not None:
-                topic = api.get_topic(target_topic_id)
-                if topic is None:
-                    raise ValueError(f"Topic {target_topic_id} not found")
-                topic_id = target_topic_id
-                topic_name = topic.name
-                decks_imported = []
-                for deck_data in topic_data.get("decks", []):
-                    decks_imported.append(_import_deck_data(deck_data, topic_id, api))
-            else:
-                from datetime import date
-                exam_date = None
-                if topic_data.get("exam_date"):
-                    exam_date = date.fromisoformat(topic_data["exam_date"])
-                topic_name = _unique_topic_name(topic_data["name"], api)
-                new_topic = api.create_topic(DbTopicCreate(
-                    name=topic_name,
-                    description=topic_data.get("description"),
-                    exam_date=exam_date,
-                ))
-                topic_id = new_topic.id
-                decks_imported = []
-                for deck_data in topic_data.get("decks", []):
-                    decks_imported.append(_import_deck_data(deck_data, topic_id, api))
+            exam_date = None
+            if topic_data.get("exam_date"):
+                exam_date = date.fromisoformat(topic_data["exam_date"])
+            topic_name = _unique_topic_name(topic_data["name"], api)
+            new_topic = api.create_topic(DbTopicCreate(
+                name=topic_name,
+                description=topic_data.get("description"),
+                exam_date=exam_date,
+            ))
+            topic_id = new_topic.id
+            decks_imported = [
+                _import_deck_data(deck_data, topic_id, api)
+                for deck_data in topic_data.get("decks", [])
+            ]
         return {
             "type": "topic",
             "created": {
@@ -198,4 +188,4 @@ def import_transfer(payload: dict, target_topic_id: int | None = None) -> dict:
         }
 
     else:
-        raise ValueError(f"Unknown export type: {kind!r}")
+        raise ValueError(f"Unbekannter Export-Typ: {kind!r}")

@@ -31,7 +31,8 @@ export function ThemeToggle() {
       className="icon-btn"
       onClick={toggle}
       aria-label={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
-      title={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
+      data-tip={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
+      data-tip-align="end"
     >
       <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
     </button>

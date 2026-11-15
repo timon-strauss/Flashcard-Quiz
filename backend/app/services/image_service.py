@@ -8,7 +8,7 @@ ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp", "applicat
 
 def save_image(file: UploadFile, data: bytes) -> str:
     if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail="Only image files are allowed")
+        raise HTTPException(status_code=400, detail="Nur Bilddateien sind erlaubt")
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     ext = os.path.splitext(file.filename)[1].lower()

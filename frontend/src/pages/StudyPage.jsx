@@ -4,6 +4,7 @@ import { api, imageUrl, useLoad } from '../api.js'
 import Icon from '../components/Icon.jsx'
 import { ThemeToggle } from '../components/Layout.jsx'
 import { Loading, LoadError, isFinished } from '../components/Stats.jsx'
+import RichText from '../components/RichText.jsx'
 
 const RATINGS = [
   { value: 1, label: 'Nochmal', tone: 'again' },
@@ -22,13 +23,13 @@ async function loadSession(scope, id, free) {
     const topics = (await api.topicsOverview()).filter((t) => !isFinished(t) && t.stats.due_cards > 0)
     const cards = (await Promise.all(topics.map((t) => api.topicDueCards(t.id)))).flat()
     cards.sort((a, b) => new Date(a.due) - new Date(b.due)) // most overdue first
-    return { title: 'Heute fällig', back: '/', cards }
+    return { title: 'Heute fällig', back: '/', backLabel: 'Zur Übersicht', cards }
   }
   if (scope === 'deck') {
     const [deck, cards] = await Promise.all([api.deck(id), free ? api.deckCards(id) : api.deckDueCards(id)])
-    return { title: deck.name, back: `/decks/${id}`, cards }
+    return { title: deck.name, back: `/decks/${id}`, backLabel: 'Zum Deck', cards }
   }
-  if (scope === 'topic') {
+  if (scope === 'project' || scope === 'topic') {
     const topic = await api.topic(id)
     let cards
     if (free) {
@@ -37,19 +38,21 @@ async function loadSession(scope, id, free) {
     } else {
       cards = await api.topicDueCards(id)
     }
-    return { title: topic.name, back: `/topics/${id}`, cards }
+    return { title: topic.name, back: `/projects/${id}`, backLabel: 'Zum Projekt', cards }
   }
   throw new Error('Unbekannte Lernansicht')
 }
 
 function Face({ side, label, text, image, hidden }) {
   const size = text.length > 280 ? 'small' : text.length > 110 ? 'medium' : 'large'
+  // lists and other multi-line text read better left-aligned
+  const lines = text.includes('\n') ? ' face-text-lines' : ''
   return (
     <div className={`face face-${side}`} aria-hidden={hidden}>
       <span className="face-label">{label}</span>
       <div className="face-body">
         {image && <img src={imageUrl(image)} alt="" />}
-        <p className={`face-text face-text-${size}`}>{text}</p>
+        <p className={`face-text face-text-${size}${lines}`}><RichText text={text} /></p>
       </div>
     </div>
   )
@@ -83,7 +86,8 @@ function Session({ session, free }) {
 
   const card = free ? queue[index] : queue[0]
   const total = free ? queue.length : done + queue.length
-  const position = free ? Math.min(index, queue.length) : done
+  const position = free ? Math.min(index, queue.length) : done // cards finished -> progress bar
+  const current = card ? Math.min(position + 1, total) : total // card on screen -> counter
 
   const show = useCallback((change) => {
     change()
@@ -159,12 +163,12 @@ function Session({ session, free }) {
     // instead of re-triggering the clicked button. Keyboard focus is left alone.
     <div className="study" onClick={(e) => e.detail > 0 && document.activeElement?.blur()}>
       <header className="study-bar">
-        <Link to={session.back} className="icon-btn" aria-label="Beenden" title="Beenden"><Icon name="close" /></Link>
+        <Link to={session.back} className="icon-btn" aria-label="Beenden" data-tip="Beenden" data-tip-align="start"><Icon name="close" /></Link>
         <div className="study-title">
           <span>{session.title}</span>
           {free && <span className="pill">Freies Üben</span>}
         </div>
-        <span className="study-count">{total > 0 && `${position} / ${total}`}</span>
+        <span className="study-count">{total > 0 && `${current} / ${total}`}</span>
         <ThemeToggle />
       </header>
       <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={position}>
@@ -182,7 +186,7 @@ function Session({ session, free }) {
                 <button className="btn" onClick={() => step(-1)} disabled={index === 0}><Icon name="back" /> Zurück</button>
                 <button className="btn" onClick={flip}>Umdrehen <kbd>Leertaste</kbd></button>
                 <button className="btn btn-primary" onClick={() => step(1)}>Weiter <Icon name="next" /></button>
-                <button className="icon-btn" onClick={shuffle} title="Mischen" aria-label="Mischen"><Icon name="shuffle" /></button>
+                <button className="icon-btn" onClick={shuffle} data-tip="Mischen" aria-label="Mischen"><Icon name="shuffle" /></button>
               </>
             ) : flipped ? (
               RATINGS.map((r) => (
@@ -208,7 +212,7 @@ function Session({ session, free }) {
                 <h2>Geschafft.</h2>
                 <p className="muted">
                   {free
-                    ? `Du bist alle ${total} Karten durchgegangen.`
+                    ? total === 1 ? 'Du bist die eine Karte durchgegangen.' : `Du bist alle ${total} Karten durchgegangen.`
                     : `${done} ${done === 1 ? 'Karte' : 'Karten'} gelernt, ${reviews} Bewertungen.`}
                 </p>
                 {!free && (
@@ -227,7 +231,7 @@ function Session({ session, free }) {
               {free && total > 0 && (
                 <button className="btn" onClick={() => show(() => setIndex(0))}>Nochmal von vorn</button>
               )}
-              <Link to={session.back} className="btn btn-primary">Zurück</Link>
+              <Link to={session.back} className="btn btn-primary">{session.backLabel}</Link>
             </div>
           </div>
         </div>

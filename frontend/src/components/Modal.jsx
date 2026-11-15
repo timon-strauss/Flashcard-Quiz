@@ -43,7 +43,7 @@ export function useAction() {
       setBusy(false)
     }
   }
-  return { busy, error, setError, run }
+  return { busy, error, run }
 }
 
 export function ConfirmDialog({ title, text, confirmLabel = 'Löschen', onConfirm, onClose }) {

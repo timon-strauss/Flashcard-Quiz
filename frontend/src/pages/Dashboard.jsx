@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api, useLoad } from '../api.js'
 import Icon from '../components/Icon.jsx'
 import { TopicForm, DeckForm, ImportForm } from '../components/Forms.jsx'
-import { OverviewCard, Loading, LoadError, examLabel, isFinished } from '../components/Stats.jsx'
+import { OverviewCard, Loading, LoadError, byName, examLabel, isFinished } from '../components/Stats.jsx'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -17,7 +17,7 @@ export default function Dashboard() {
   if (loading && !data) return <Loading />
 
   const [topics, decks] = data
-  const looseDecks = decks.filter((d) => d.topic_id === null)
+  const looseDecks = decks.filter((d) => d.topic_id === null).sort(byName)
   const total = decks.reduce((sum, d) => sum + d.stats.total_cards, 0)
   const isEmpty = topics.length === 0 && decks.length === 0
 
@@ -37,7 +37,7 @@ export default function Dashboard() {
     return (
       <OverviewCard
         key={t.id}
-        to={`/topics/${t.id}`}
+        to={`/projects/${t.id}`}
         title={t.name}
         description={t.description}
         stats={t.stats}
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
   const onImported = (result) => {
     const c = result.created
-    navigate(result.type === 'topic' ? `/topics/${c.topic_id}` : `/decks/${c.deck_id}`)
+    navigate(result.type === 'topic' ? `/projects/${c.topic_id}` : `/decks/${c.deck_id}`)
   }
 
   return (
@@ -109,7 +109,7 @@ export default function Dashboard() {
       )}
 
       {dialog === 'topic' && (
-        <TopicForm onClose={() => setDialog(null)} onSaved={(t) => navigate(`/topics/${t.id}`)} />
+        <TopicForm onClose={() => setDialog(null)} onSaved={(t) => navigate(`/projects/${t.id}`)} />
       )}
       {dialog === 'deck' && (
         <DeckForm topics={topics} onClose={() => setDialog(null)} onSaved={(d) => navigate(`/decks/${d.id}`)} />

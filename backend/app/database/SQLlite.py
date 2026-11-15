@@ -14,6 +14,9 @@ from .database import SessionLocal, start_db
 
 # FSRS card states
 LEARNING, REVIEW, RELEARNING = 1, 2, 3
+# Without an upcoming exam a card counts as ready ("gefestigt") once its FSRS stability,
+# roughly the interval until the next review, reaches three weeks.
+READY_STABILITY_DAYS = 21
 
 
 # SQLite stores datetimes without timezone, so every stored datetime is UTC by convention.
@@ -282,23 +285,48 @@ class SQLite(DatabaseAPI):
         def count_if(condition):
             return func.coalesce(func.sum(case((condition, 1), else_=0)), 0)
 
+        if deck_id is not None and self.db.get(Deck, deck_id) is None:
+            return None
+        if topic_id is not None and self.db.get(Topic, topic_id) is None:
+            return None
+
+        now = _to_db(due_before)
         is_new = (Card.state == LEARNING) & Card.last_review.is_(None)
-        query = self._in_scope(
+        is_due = Card.due <= now
+        # Ready = nothing left to do before the exam: the card is not due and will not
+        # become due until the exam day is over. Without an upcoming exam (no topic, no
+        # exam date, exam already written) a long interval counts instead.
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        exam_ahead = Topic.exam_date.is_not(None) & (Topic.exam_date >= today)
+        is_ready = ~is_due & case(
+            (exam_ahead, func.datetime(Card.due) >= func.datetime(Topic.exam_date, "+1 day")),
+            else_=func.coalesce(Card.stability, 0) >= READY_STABILITY_DAYS,
+        )
+
+        query = (
             self.db.query(
                 func.count(Card.id),
-                count_if(Card.due <= _to_db(due_before)),
+                count_if(is_due),
                 count_if(is_new),
                 count_if((Card.state == LEARNING) & Card.last_review.is_not(None)),
                 count_if(Card.state == REVIEW),
                 count_if(Card.state == RELEARNING),
-            ),
-            deck_id,
-            topic_id,
+                count_if(is_ready),
+                func.max(Card.last_review),
+            )
+            .select_from(Card)
+            .join(Deck, Card.deck_id == Deck.id)
+            .outerjoin(Topic, Deck.topic_id == Topic.id)
         )
-        if query is None:
-            return None
-        total, due, new, learning, review, relearning = query.one()
+        if deck_id is not None:
+            query = query.filter(Card.deck_id == deck_id)
+        if topic_id is not None:
+            query = query.filter(Deck.topic_id == topic_id)
+
+        total, due, new, learning, review, relearning, ready, last_review = query.one()
         return CardStats(
             total=total, due=due, new=new,
             learning=learning, review=review, relearning=relearning,
+            ready=ready,
+            last_review=last_review.replace(tzinfo=timezone.utc) if last_review else None,
         )

@@ -115,6 +115,7 @@ class TestDecks:
         assert deck["stats"] == {
             "total_cards": 0, "due_cards": 0, "new_cards": 0,
             "learning_cards": 0, "review_cards": 0, "relearning_cards": 0,
+            "ready_cards": 0, "last_review": None,
         }
 
     def test_create_in_missing_topic_is_404(self, client):
@@ -247,13 +248,16 @@ class TestReview:
         _card(client, deck)
         _review(client, easy, EASY)
         _review(client, again, AGAIN)
-        assert client.get(f"/decks/{deck['id']}").json()["stats"] == {
+        stats = client.get(f"/decks/{deck['id']}").json()["stats"]
+        assert _parse(stats.pop("last_review")) <= datetime.now(timezone.utc)
+        assert stats == {
             "total_cards": 3,
             "due_cards": 1,       # only the untouched card; "again" is due in a minute
             "new_cards": 1,
             "learning_cards": 1,
             "review_cards": 1,
             "relearning_cards": 0,
+            "ready_cards": 0,     # one Easy is not three weeks of stability yet
         }
 
 

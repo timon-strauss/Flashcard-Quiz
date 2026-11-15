@@ -296,3 +296,37 @@ class TestGetCardStats:
 
     def test_missing_topic_returns_none(self, api):
         assert api.get_card_stats(NOW, topic_id=999) is None
+
+
+class TestReadyCards:
+    def test_new_and_due_cards_are_never_ready(self, api, deck):
+        _card(api, deck)
+        _review(api, _card(api, deck), state=REVIEW, due=NOW - DAY, stability=100)
+        assert api.get_card_stats(datetime.now(timezone.utc)).ready == 0
+
+    def test_without_exam_a_long_interval_counts(self, api, deck):
+        _review(api, _card(api, deck), state=REVIEW, due=NOW + DAY, stability=5)
+        _review(api, _card(api, deck), state=REVIEW, due=NOW + 30 * DAY, stability=30)
+        assert api.get_card_stats(NOW, deck_id=deck.id).ready == 1
+
+    def test_with_exam_ahead_the_card_must_outlast_the_exam_day(self, api):
+        topic = api.create_topic(TopicCreate(name="Exam", exam_date=(NOW + 10 * DAY).date()))
+        deck = api.create_deck(DeckCreate(name="D", topic_id=topic.id))
+        _review(api, _card(api, deck), state=REVIEW, due=NOW + 5 * DAY, stability=100)  # back before
+        _review(api, _card(api, deck), state=REVIEW, due=NOW + 10 * DAY, stability=5)   # on the day
+        _review(api, _card(api, deck), state=REVIEW, due=NOW + 12 * DAY, stability=5)   # after
+        assert api.get_card_stats(NOW, topic_id=topic.id).ready == 1
+        assert api.get_card_stats(NOW, deck_id=deck.id).ready == 1
+
+    def test_past_exam_falls_back_to_the_interval(self, api):
+        topic = api.create_topic(TopicCreate(name="Done", exam_date=(NOW - 10 * DAY).date()))
+        deck = api.create_deck(DeckCreate(name="D", topic_id=topic.id))
+        _review(api, _card(api, deck), state=REVIEW, due=NOW + DAY, stability=5)
+        _review(api, _card(api, deck), state=REVIEW, due=NOW + 30 * DAY, stability=30)
+        assert api.get_card_stats(NOW, topic_id=topic.id).ready == 1
+
+    def test_last_review_is_the_most_recent_one(self, api, deck):
+        assert api.get_card_stats(NOW).last_review is None
+        _review(api, _card(api, deck), at=NOW - 3 * DAY)
+        _review(api, _card(api, deck), at=NOW - DAY)
+        assert api.get_card_stats(NOW).last_review == NOW - DAY

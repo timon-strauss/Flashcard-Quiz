@@ -66,7 +66,6 @@ export const api = {
   reorderCards: (id, order) => request(`/decks/${id}/card-order`, json('PATCH', { order })),
 
   // Cards — multipart, images are optional File objects
-  dueCards: (limit) => request(`/cards/due${limitQuery(limit)}`),
   createCard: (fields) => request('/cards', { method: 'POST', body: form(fields) }),
   updateCard: (id, fields) => request(`/cards/${id}`, { method: 'PUT', body: form(fields) }),
   deleteCard: (id) => request(`/cards/${id}`, { method: 'DELETE' }),

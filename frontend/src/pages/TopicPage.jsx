@@ -5,7 +5,8 @@ import Icon from '../components/Icon.jsx'
 import { Breadcrumbs } from '../components/Layout.jsx'
 import { ConfirmDialog } from '../components/Modal.jsx'
 import { TopicForm, DeckForm, ImportForm } from '../components/Forms.jsx'
-import { OverviewCard, StatsPanel, Loading, LoadError, examLabel } from '../components/Stats.jsx'
+import RichText from '../components/RichText.jsx'
+import { OverviewCard, StatsPanel, Loading, LoadError, byName, cardCount, examLabel } from '../components/Stats.jsx'
 
 export default function TopicPage() {
   const { topicId } = useParams()
@@ -22,7 +23,7 @@ export default function TopicPage() {
   if (loading && !data) return <Loading />
 
   const [topic, allDecks, topics] = data
-  const decks = allDecks.filter((d) => d.topic_id === id)
+  const decks = allDecks.filter((d) => d.topic_id === id).sort(byName)
   const { stats } = topic
   const exam = examLabel(stats.days_until_exam)
   const close = () => setDialog(null)
@@ -37,7 +38,7 @@ export default function TopicPage() {
 
   const onImported = (result) => {
     close()
-    setNotice(`„${result.created.deck_name}“ importiert (${result.created.cards_imported} Karten).`)
+    setNotice(`„${result.created.deck_name}“ importiert (${cardCount(result.created.cards_imported)}).`)
     reload()
   }
 
@@ -49,13 +50,13 @@ export default function TopicPage() {
         <div>
           <p className="eyebrow">Projekt{exam && ` · ${exam}`}</p>
           <h1>{topic.name}</h1>
-          {topic.description && <p className="lead">{topic.description}</p>}
+          {topic.description && <p className="lead"><RichText text={topic.description} /></p>}
         </div>
         <div className="row">
-          <button className="icon-btn" title="Bearbeiten" aria-label="Bearbeiten" onClick={() => setDialog('edit')}><Icon name="edit" /></button>
-          <button className="icon-btn" title="Exportieren" aria-label="Exportieren" onClick={exportTopic}><Icon name="download" /></button>
-          <button className="icon-btn" title="Deck importieren" aria-label="Deck importieren" onClick={() => setDialog('import')}><Icon name="upload" /></button>
-          <button className="icon-btn danger" title="Löschen" aria-label="Löschen" onClick={() => setDialog('delete')}><Icon name="trash" /></button>
+          <button className="icon-btn" data-tip="Projekt bearbeiten" aria-label="Projekt bearbeiten" onClick={() => setDialog('edit')}><Icon name="edit" /></button>
+          <button className="icon-btn" data-tip="Projekt exportieren" aria-label="Projekt exportieren" onClick={exportTopic}><Icon name="download" /></button>
+          <button className="icon-btn" data-tip="Deck importieren" aria-label="Deck importieren" onClick={() => setDialog('import')}><Icon name="upload" /></button>
+          <button className="icon-btn danger" data-tip="Projekt löschen" data-tip-align="end" aria-label="Projekt löschen" onClick={() => setDialog('delete')}><Icon name="trash" /></button>
         </div>
       </header>
 
@@ -74,12 +75,12 @@ export default function TopicPage() {
         }
       >
           {stats.due_cards > 0 ? (
-            <Link to={`/study/topic/${id}`} className="btn btn-primary">Fällige lernen</Link>
+            <Link to={`/study/project/${id}`} className="btn btn-primary">Fällige lernen</Link>
           ) : (
             <span className="muted">Nichts fällig.</span>
           )}
           {stats.total_cards > 0 && (
-            <Link to={`/study/topic/${id}?mode=all`} className="btn">Alle Karten durchgehen</Link>
+            <Link to={`/study/project/${id}?mode=all`} className="btn" title="Alle Karten ohne Bewertung durchgehen">Freies Üben</Link>
           )}
       </StatsPanel>
 
@@ -109,12 +110,12 @@ export default function TopicPage() {
         <DeckForm topics={topics} defaultTopicId={id} onClose={close} onSaved={(d) => navigate(`/decks/${d.id}`)} />
       )}
       {dialog === 'import' && (
-        <ImportForm topics={topics} defaultTopicId={id} onClose={close} onImported={(r) => (r.type === 'deck' ? onImported(r) : navigate(`/topics/${r.created.topic_id}`))} />
+        <ImportForm topics={topics} defaultTopicId={id} onClose={close} onImported={(r) => (r.type === 'deck' ? onImported(r) : navigate(`/projects/${r.created.topic_id}`))} />
       )}
       {dialog === 'delete' && (
         <ConfirmDialog
           title="Projekt löschen?"
-          text={`„${topic.name}“ wird mit ${decks.length} ${decks.length === 1 ? 'Deck' : 'Decks'} und ${stats.total_cards} Karten endgültig gelöscht.`}
+          text={`„${topic.name}“ wird mit ${decks.length} ${decks.length === 1 ? 'Deck' : 'Decks'} und ${cardCount(stats.total_cards)} endgültig gelöscht.`}
           onClose={close}
           onConfirm={async () => {
             await api.deleteTopic(id)

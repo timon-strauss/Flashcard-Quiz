@@ -31,7 +31,7 @@ async def create_card(
     )
     card = card_service.create_card(body)
     if card is None:
-        raise HTTPException(status_code=404, detail="Deck not found")
+        raise HTTPException(status_code=404, detail="Deck nicht gefunden")
     return card
 
 
@@ -45,7 +45,7 @@ def list_due_cards(limit: int | None = Query(None, ge=1)):
 def get_card(card_id: int):
     card = card_service.get_card(card_id)
     if card is None:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="Karte nicht gefunden")
     return card
 
 
@@ -78,14 +78,14 @@ async def update_card(
     body = CardUpdate(**updates)
     card = card_service.update_card(card_id, body)
     if card is None:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="Karte nicht gefunden")
     return card
 
 
 @router.delete("/{card_id}", status_code=204)
 def delete_card(card_id: int):
     if not card_service.delete_card(card_id):
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="Karte nicht gefunden")
 
 
 @router.post("/{card_id}/review", response_model=CardResponse)
@@ -93,5 +93,5 @@ def review_card(card_id: int, body: CardReviewRequest):
     """Rates a card (1 = Again, 2 = Hard, 3 = Good, 4 = Easy) and returns it with its new due date."""
     card = review_service.review_card(card_id, body.rating)
     if card is None:
-        raise HTTPException(status_code=404, detail="Card not found")
+        raise HTTPException(status_code=404, detail="Karte nicht gefunden")
     return card

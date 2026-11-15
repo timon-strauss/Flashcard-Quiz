@@ -141,7 +141,8 @@ class DatabaseAPI(ABC):
         deck_id: int | None = None,
         topic_id: int | None = None,
     ) -> CardStats | None:
-        """Card counts per state, and how many are due (due <= due_before).
+        """Card counts per state, how many are due (due <= due_before), how many are ready
+        for the exam of their topic as of `due_before`, and the most recent review.
 
         Over all cards by default. None if deck / topic doesnt exist
         """

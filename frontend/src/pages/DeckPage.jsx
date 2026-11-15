@@ -5,7 +5,8 @@ import Icon from '../components/Icon.jsx'
 import { Breadcrumbs } from '../components/Layout.jsx'
 import { ConfirmDialog } from '../components/Modal.jsx'
 import { DeckForm, CardForm } from '../components/Forms.jsx'
-import { StatsPanel, Loading, LoadError } from '../components/Stats.jsx'
+import RichText from '../components/RichText.jsx'
+import { StatsPanel, Loading, LoadError, cardCount } from '../components/Stats.jsx'
 
 function dueInfo(card) {
   if (!card.last_review) return { label: 'Neu', tone: 'new' }
@@ -30,11 +31,11 @@ function CardRow({ card, onEdit, onDelete, drag }) {
       <span className="grip" title="Ziehen zum Sortieren"><Icon name="grip" size={16} /></span>
       <div className="crow-side">
         {card.front_image && <img src={imageUrl(card.front_image)} alt="" loading="lazy" />}
-        <p>{card.front}</p>
+        <p><RichText text={card.front} /></p>
       </div>
       <div className="crow-side crow-back">
         {card.back_image && <img src={imageUrl(card.back_image)} alt="" loading="lazy" />}
-        <p>{card.back}</p>
+        <p><RichText text={card.back} /></p>
       </div>
       <span className={`pill pill-${due.tone}`}>{due.label}</span>
       <div className="crow-actions">
@@ -117,7 +118,7 @@ export default function DeckPage() {
       <Breadcrumbs
         items={[
           { label: 'Übersicht', to: '/' },
-          ...(topic ? [{ label: topic.name, to: `/topics/${topic.id}` }] : []),
+          ...(topic ? [{ label: topic.name, to: `/projects/${topic.id}` }] : []),
           { label: deck.name },
         ]}
       />
@@ -126,12 +127,12 @@ export default function DeckPage() {
         <div>
           <p className="eyebrow">Deck</p>
           <h1>{deck.name}</h1>
-          {deck.description && <p className="lead">{deck.description}</p>}
+          {deck.description && <p className="lead"><RichText text={deck.description} /></p>}
         </div>
         <div className="row">
-          <button className="icon-btn" title="Bearbeiten" aria-label="Bearbeiten" onClick={() => setDialog({ type: 'edit' })}><Icon name="edit" /></button>
-          <button className="icon-btn" title="Exportieren" aria-label="Exportieren" onClick={exportDeck}><Icon name="download" /></button>
-          <button className="icon-btn danger" title="Löschen" aria-label="Löschen" onClick={() => setDialog({ type: 'delete' })}><Icon name="trash" /></button>
+          <button className="icon-btn" data-tip="Deck bearbeiten" aria-label="Deck bearbeiten" onClick={() => setDialog({ type: 'edit' })}><Icon name="edit" /></button>
+          <button className="icon-btn" data-tip="Deck exportieren" aria-label="Deck exportieren" onClick={exportDeck}><Icon name="download" /></button>
+          <button className="icon-btn danger" data-tip="Deck löschen" data-tip-align="end" aria-label="Deck löschen" onClick={() => setDialog({ type: 'delete' })}><Icon name="trash" /></button>
         </div>
       </header>
 
@@ -144,7 +145,7 @@ export default function DeckPage() {
             <span className="muted">Nichts fällig.</span>
           )}
           {stats.total_cards > 0 && (
-            <Link to={`/study/deck/${id}?mode=all`} className="btn">Alle Karten durchgehen</Link>
+            <Link to={`/study/deck/${id}?mode=all`} className="btn" title="Alle Karten ohne Bewertung durchgehen">Freies Üben</Link>
           )}
       </StatsPanel>
 
@@ -202,11 +203,11 @@ export default function DeckPage() {
       {dialog?.type === 'delete' && (
         <ConfirmDialog
           title="Deck löschen?"
-          text={`„${deck.name}“ wird mit ${stats.total_cards} Karten endgültig gelöscht.`}
+          text={`„${deck.name}“ wird mit ${cardCount(stats.total_cards)} endgültig gelöscht.`}
           onClose={close}
           onConfirm={async () => {
             await api.deleteDeck(id)
-            navigate(topic ? `/topics/${topic.id}` : '/')
+            navigate(topic ? `/projects/${topic.id}` : '/')
           }}
         />
       )}

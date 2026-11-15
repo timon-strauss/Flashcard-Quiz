@@ -27,6 +27,7 @@ Upload/*
 # Node
 node_modules/
 frontend/dist/
+frontend/.vite/
 
 # Docker
 *.log

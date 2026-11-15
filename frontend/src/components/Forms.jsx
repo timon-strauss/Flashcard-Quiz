@@ -274,15 +274,15 @@ export function CardForm({ card, deckId, onSaved, onClose }) {
         <div className="card-form">
           <div>
             <label className="field">
-              <span>Vorderseite</span>
-              <textarea ref={frontRef} rows={5} value={front} onChange={(e) => setFront(e.target.value)} required autoFocus placeholder="Frage" />
+              <span>Frage</span>
+              <textarea ref={frontRef} rows={5} value={front} onChange={(e) => setFront(e.target.value)} required autoFocus />
             </label>
             <ImageField value={frontImage} onChange={setFrontImage} />
           </div>
           <div>
             <label className="field">
-              <span>Rückseite</span>
-              <textarea rows={5} value={back} onChange={(e) => setBack(e.target.value)} required placeholder="Antwort" />
+              <span>Antwort</span>
+              <textarea rows={5} value={back} onChange={(e) => setBack(e.target.value)} required />
             </label>
             <ImageField value={backImage} onChange={setBackImage} />
           </div>

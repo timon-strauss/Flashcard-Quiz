@@ -10,7 +10,7 @@ router = APIRouter(tags=["transfer"])
 def export_deck(deck_id: int):
     data = transfer_service.export_deck(deck_id)
     if data is None:
-        raise HTTPException(status_code=404, detail="Deck not found")
+        raise HTTPException(status_code=404, detail="Deck nicht gefunden")
     filename = f"deck_{deck_id}.json"
     return JSONResponse(
         content=data,
@@ -22,7 +22,7 @@ def export_deck(deck_id: int):
 def export_topic(topic_id: int):
     data = transfer_service.export_topic(topic_id)
     if data is None:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
     filename = f"topic_{topic_id}.json"
     return JSONResponse(
         content=data,
@@ -36,12 +36,12 @@ async def import_transfer(
     target_topic_id: int | None = Form(None),
 ):
     if file.content_type not in ("application/json", "text/plain", "application/octet-stream"):
-        raise HTTPException(status_code=400, detail="Only JSON files are accepted")
+        raise HTTPException(status_code=400, detail="Nur JSON-Dateien werden akzeptiert")
     raw = await file.read()
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON file")
+        raise HTTPException(status_code=400, detail="Ungültige JSON-Datei")
     try:
         result = transfer_service.import_transfer(payload, target_topic_id)
     except ValueError as e:
