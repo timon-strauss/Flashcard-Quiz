@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from .schemas import DeckCreate, DeckUpdate, DeckLean, DeckResponse, CardResponse, CardOrderUpdate
-from ..services import deck_service
+from ..services import deck_service, review_service
 
 router = APIRouter(prefix="/decks", tags=["decks"])
 
@@ -56,6 +56,14 @@ def list_deck_cards(deck_id: int):
 @router.patch("/{deck_id}/card-order", response_model=list[CardResponse])
 def reorder_deck_cards(deck_id: int, body: CardOrderUpdate):
     cards = deck_service.reorder_deck_cards(deck_id, body.order)
+    if cards is None:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    return cards
+
+
+@router.get("/{deck_id}/due-cards", response_model=list[CardResponse])
+def list_due_deck_cards(deck_id: int, limit: int | None = None):
+    cards = review_service.list_due_cards(deck_id=deck_id, limit=limit)
     if cards is None:
         raise HTTPException(status_code=404, detail="Deck not found")
     return cards

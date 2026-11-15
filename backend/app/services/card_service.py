@@ -1,7 +1,6 @@
-from datetime import datetime, timezone
 from ..database import db
 from ..database.schemas import CardCreate as DbCardCreate, CardUpdate as DbCardUpdate
-from ..routers.schemas import CardCreate, CardUpdate, CardMemorizedUpdate, CardResponse
+from ..routers.schemas import CardCreate, CardUpdate, CardResponse
 from .image_service import delete_image
 
 
@@ -55,21 +54,3 @@ def delete_card(card_id: int) -> bool:
         if back_image:
             delete_image(back_image)
     return result
-
-
-def mark_card_seen(card_id: int) -> CardResponse | None:
-    db_data = DbCardUpdate.model_validate({"id": card_id, "last_seen_at": datetime.now(timezone.utc)})
-    with db() as api:
-        c = api.update_card(db_data)
-    if c is None:
-        return None
-    return CardResponse.model_validate(c)
-
-
-def set_card_memorized(card_id: int, data: CardMemorizedUpdate) -> CardResponse | None:
-    db_data = DbCardUpdate.model_validate({"id": card_id, "memorized": data.memorized})
-    with db() as api:
-        c = api.update_card(db_data)
-    if c is None:
-        return None
-    return CardResponse.model_validate(c)

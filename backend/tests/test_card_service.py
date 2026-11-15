@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch, call
 
 import pytest
 
-from app.routers.schemas import CardCreate, CardUpdate, CardMemorizedUpdate
+from app.routers.schemas import CardCreate, CardUpdate
 from app.database.schemas import CardResponse as DbCardResponse
 import app.services.card_service as svc
 
@@ -11,12 +11,11 @@ import app.services.card_service as svc
 def _make_card(
     id=1, deck_id=1, front="Q", back="A",
     front_image=None, back_image=None,
-    memorized=False, last_seen_at=None,
 ) -> DbCardResponse:
     return DbCardResponse(
         id=id, deck_id=deck_id, front=front, back=back,
         front_image=front_image, back_image=back_image,
-        memorized=memorized, last_seen_at=last_seen_at,
+        state=1, step=0, due=datetime(2026, 1, 1, tzinfo=timezone.utc),
     )
 
 
@@ -53,8 +52,8 @@ class TestCreateCard:
         result = svc.create_card(CardCreate(deck_id=1, front="Q", back="A"))
         assert result is not None
         assert result.id == 1
-        assert result.memorized is False
-        assert result.last_seen_at is None
+        assert result.state == 1
+        assert result.last_review is None
 
     def test_with_images(self, mock_api):
         mock_api.create_card.return_value = _make_card(
@@ -118,57 +117,3 @@ class TestDeleteCard:
     def test_missing_returns_false(self, mock_api):
         mock_api.delete_card.return_value = False
         assert svc.delete_card(999) is False
-
-
-# ── mark_card_seen ─────────────────────────────────────────────────────────────
-
-class TestMarkCardSeen:
-    def test_updates_last_seen_at(self, mock_api):
-        ts = datetime(2026, 5, 1, 10, 0, 0, tzinfo=timezone.utc)
-        mock_api.update_card.return_value = _make_card(id=1, last_seen_at=ts)
-        result = svc.mark_card_seen(1)
-        assert result is not None
-        assert result.last_seen_at == ts
-
-    def test_missing_returns_none(self, mock_api):
-        mock_api.update_card.return_value = None
-        assert svc.mark_card_seen(999) is None
-
-    def test_passes_id_and_timestamp_to_db(self, mock_api):
-        mock_api.update_card.return_value = _make_card(id=2)
-        svc.mark_card_seen(2)
-        call_arg = mock_api.update_card.call_args[0][0]
-        assert call_arg.id == 2
-        assert call_arg.last_seen_at is not None
-
-    def test_timestamp_is_utc(self, mock_api):
-        mock_api.update_card.return_value = _make_card(id=1)
-        svc.mark_card_seen(1)
-        call_arg = mock_api.update_card.call_args[0][0]
-        assert call_arg.last_seen_at.tzinfo == timezone.utc
-
-
-# ── set_card_memorized ─────────────────────────────────────────────────────────
-
-class TestSetCardMemorized:
-    def test_mark_memorized(self, mock_api):
-        mock_api.update_card.return_value = _make_card(id=1, memorized=True)
-        result = svc.set_card_memorized(1, CardMemorizedUpdate(memorized=True))
-        assert result is not None
-        assert result.memorized is True
-
-    def test_unmark_memorized(self, mock_api):
-        mock_api.update_card.return_value = _make_card(id=1, memorized=False)
-        result = svc.set_card_memorized(1, CardMemorizedUpdate(memorized=False))
-        assert result.memorized is False
-
-    def test_missing_returns_none(self, mock_api):
-        mock_api.update_card.return_value = None
-        assert svc.set_card_memorized(999, CardMemorizedUpdate(memorized=True)) is None
-
-    def test_passes_correct_memorized_flag_to_db(self, mock_api):
-        mock_api.update_card.return_value = _make_card(id=3)
-        svc.set_card_memorized(3, CardMemorizedUpdate(memorized=True))
-        call_arg = mock_api.update_card.call_args[0][0]
-        assert call_arg.id == 3
-        assert call_arg.memorized is True

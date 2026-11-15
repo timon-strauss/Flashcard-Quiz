@@ -61,7 +61,7 @@ def export_deck(deck_id: int) -> dict | None:
         deck = api.get_deck(deck_id)
         if deck is None:
             return None
-        cards = api.list_cards_by_deck(deck_id) or []
+        cards = api.list_cards(deck_id=deck_id) or []
     return {
         "version": 1,
         "type": "deck",
@@ -79,10 +79,10 @@ def export_topic(topic_id: int) -> dict | None:
         topic = api.get_topic(topic_id)
         if topic is None:
             return None
-        decks = api.list_decks_by_topic(topic_id) or []
+        decks = api.list_decks(topic_id=topic_id) or []
         decks_data = []
         for d in decks:
-            cards = api.list_cards_by_deck(d.id) or []
+            cards = api.list_cards(deck_id=d.id) or []
             decks_data.append({
                 "name": d.name,
                 "description": d.description,
@@ -179,7 +179,7 @@ def import_transfer(payload: dict, target_topic_id: int | None = None) -> dict:
                 if topic_data.get("exam_date"):
                     exam_date = date.fromisoformat(topic_data["exam_date"])
                 topic_name = _unique_topic_name(topic_data["name"], api)
-                new_topic = api.create_topics(DbTopicCreate(
+                new_topic = api.create_topic(DbTopicCreate(
                     name=topic_name,
                     description=topic_data.get("description"),
                     exam_date=exam_date,

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from typing import Optional
-from .schemas import CardCreate, CardUpdate, CardMemorizedUpdate, CardResponse
-from ..services import card_service
+from .schemas import CardCreate, CardUpdate, CardReviewRequest, CardResponse
+from ..services import card_service, review_service
 from ..services.image_service import save_image
 
 router = APIRouter(prefix="/cards", tags=["cards"])
@@ -82,17 +82,9 @@ def delete_card(card_id: int):
         raise HTTPException(status_code=404, detail="Card not found")
 
 
-@router.patch("/{card_id}/seen", response_model=CardResponse)
-def mark_card_seen(card_id: int):
-    card = card_service.mark_card_seen(card_id)
-    if card is None:
-        raise HTTPException(status_code=404, detail="Card not found")
-    return card
-
-
-@router.patch("/{card_id}/memorized", response_model=CardResponse)
-def set_card_memorized(card_id: int, body: CardMemorizedUpdate):
-    card = card_service.set_card_memorized(card_id, body)
+@router.post("/{card_id}/review", response_model=CardResponse)
+def review_card(card_id: int, body: CardReviewRequest):
+    card = review_service.review_card(card_id, body.rating)
     if card is None:
         raise HTTPException(status_code=404, detail="Card not found")
     return card

@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from fastapi import HTTPException
 
 
@@ -29,9 +29,12 @@ class TopicLean(BaseModel):
 
 class TopicStats(BaseModel):
     total_cards: int
-    memorized_cards: int
-    avg_days_since_seen: float | None = None  # null = empty deck
-    days_until_exam: int | None = None        # null = no exam_date
+    due_cards: int
+    new_cards: int         # never reviewed
+    learning_cards: int
+    review_cards: int
+    relearning_cards: int
+    days_until_exam: int | None = None  # null = no exam_date
 
 class TopicResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -64,8 +67,11 @@ class DeckLean(BaseModel):
 
 class DeckStats(BaseModel):
     total_cards: int
-    memorized_cards: int
-    avg_days_since_seen: float | None = None  # null = empty deck
+    due_cards: int
+    new_cards: int         # never reviewed
+    learning_cards: int
+    review_cards: int
+    relearning_cards: int
 
 class DeckResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -92,8 +98,8 @@ class CardUpdate(BaseModel):
     front_image: str | None = None
     back_image: str | None = None
 
-class CardMemorizedUpdate(BaseModel):
-    memorized: bool
+class CardReviewRequest(BaseModel):
+    rating: int = Field(ge=1, le=4)  # 1 = Again, 2 = Hard, 3 = Good, 4 = Easy
 
 class CardResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -104,9 +110,15 @@ class CardResponse(BaseModel):
     back: str
     front_image: str | None = None
     back_image: str | None = None
-    memorized: bool
-    last_seen_at: datetime | None = None
     position: int = 0
+
+    # FSRS scheduling state
+    state: int  # 1 = Learning, 2 = Review, 3 = Relearning
+    step: int | None = None
+    stability: float | None = None
+    difficulty: float | None = None
+    due: datetime
+    last_review: datetime | None = None  # null = new card
 
 
 class CardOrderUpdate(BaseModel):

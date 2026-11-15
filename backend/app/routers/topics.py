@@ -1,7 +1,7 @@
 from datetime import date
 from fastapi import APIRouter, HTTPException
-from .schemas import TopicCreate, TopicUpdate, TopicLean, TopicResponse, DeckLean
-from ..services import topic_service
+from .schemas import TopicCreate, TopicUpdate, TopicLean, TopicResponse, DeckLean, CardResponse
+from ..services import topic_service, review_service
 
 router = APIRouter(prefix="/topics", tags=["topics"])
 
@@ -49,3 +49,11 @@ def list_topic_decks(topic_id: int):
     if decks is None:
         raise HTTPException(status_code=404, detail="Topic not found")
     return decks
+
+
+@router.get("/{topic_id}/due-cards", response_model=list[CardResponse])
+def list_due_topic_cards(topic_id: int, limit: int | None = None):
+    cards = review_service.list_due_cards(topic_id=topic_id, limit=limit)
+    if cards is None:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    return cards
